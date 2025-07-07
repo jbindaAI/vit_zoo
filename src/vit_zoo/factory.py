@@ -1,7 +1,4 @@
-import torch
-from torch import nn
-from typing import Optional, Type
-
+from typing import Optional
 from transformers import (
     ViTModel, ViTConfig,
     DeiTModel, DeiTConfig,
@@ -10,12 +7,10 @@ from transformers import (
     CLIPVisionModel, CLIPVisionConfig
 )
 
-from .utils import set_encoder_dropout_p
 from .model_registry import register_model, MODEL_REGISTRY
 from .vision_base import VisionTransformer
 
 
-# === Register each model ===
 
 @register_model("vanilla_vit")
 def create_vanilla_vit(**kwargs) -> VisionTransformer:
