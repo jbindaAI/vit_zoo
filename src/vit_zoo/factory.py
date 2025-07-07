@@ -142,7 +142,7 @@ def build_model(
     freeze_backbone: bool = False,
     config_kwargs: Optional[dict] = None,
     **kwargs
-) -> VisionTransformer:
+    ) -> VisionTransformer:
     """
     Builds a vision model using a registered architecture.
 

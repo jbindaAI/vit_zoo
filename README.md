@@ -20,6 +20,6 @@ A clean, extensible, and reusable factory for creating HuggingFace-based Vision 
 ### Local development install
 
 ```bash
-git clone todo
-cd vision_transformer_factory
+git clone git@github.com:jbindaAI/vit_zoo.git
+cd vit_zoo
 pip install -e .
