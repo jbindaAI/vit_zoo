@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vit_zoo"
+version = "0.1.0"
+description = "Vision Transformers Zoo"
+keywords = [
+    "Vision Transformers"
+        ]
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.9"
+license = { text = "GPL-3.0" }
+authors = [
+    {name = "Jakub Binda", email = "binkuba@gmail.com"}
+]
+maintainers = [
+    {name = "Jakub Binda", email = "binkuba@gmail.com"},
+]
+dependencies = [
+    "torch >= 2.1.0",
+    "torchvision >= 0.16",
+    "transformers[torch] >= 4.46.1",
+]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.urls]
+Homepage = "TODO"
+Source = "TODO"
+
+[project.optional-dependencies]
+dev = [
+    "pytest >= 8.3.5"
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
