@@ -1,5 +1,5 @@
 from typing import Dict, Callable
-from .factory import VisionTransformer
+from .vision_base import VisionTransformer
 
 ModelFn = Callable[..., VisionTransformer]
 MODEL_REGISTRY: Dict[str, ModelFn] = {}
