@@ -1,3 +1,7 @@
+"""
+Tests for the factory module.
+"""
+
 import torch
 from vit_zoo import build_model
 
