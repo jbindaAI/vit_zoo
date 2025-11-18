@@ -35,8 +35,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "TODO"
-Source = "TODO"
+Source = "https://github.com/jbindaAI/vit_zoo"
 
 [project.optional-dependencies]
 dev = [
