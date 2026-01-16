@@ -55,14 +55,23 @@ class ViTLightningModule(pl.LightningModule):
 
 ```python
 from vit_zoo import build_model, MLPHead
+import torch.nn as nn
 
-# Create MLP head yourself
+# Create MLP head with string activation (most common)
 mlp_head = MLPHead(
     input_dim=768,  # Must match backbone embedding dimension
     hidden_dims=[512, 256],
     output_dim=100,
     dropout=0.1,
-    activation="relu"
+    activation="gelu"  # String literal: 'relu', 'gelu', or 'tanh'
+)
+
+# Or use custom nn.Module activation
+mlp_head_custom = MLPHead(
+    input_dim=768,
+    hidden_dims=[512, 256],
+    output_dim=100,
+    activation=nn.SiLU()  # Any PyTorch activation module
 )
 
 model = build_model("dino_v2_vit", head=mlp_head)
@@ -110,19 +119,25 @@ class MyCustomHead(BaseHead):
     """Custom head - can be MLP, UNET decoder, attention-based, etc."""
     def __init__(self, input_dim: int, num_classes: int):
         super().__init__()
+        self._input_dim = input_dim  # Store for input_dim property
         self.fc1 = nn.Linear(input_dim, 256)
         self.fc2 = nn.Linear(256, num_classes)
+    
+    @property
+    def input_dim(self) -> int:
+        """Returns the input dimension of the head."""
+        return self._input_dim
     
     def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
         x = torch.relu(self.fc1(embeddings))
         return self.fc2(x)
 
-# Use custom head (ensure input_dim matches backbone embedding dimension)
+# Use custom head - input_dim will be validated automatically
 head = MyCustomHead(input_dim=768, num_classes=10)  # vanilla_vit has 768-dim embeddings
-model = build_model("vanilla_vit", head=head)
+model = build_model("vanilla_vit", head=head)  # Validates input_dim matches
 ```
 
-**Note:** When creating custom heads, ensure the `input_dim` matches the backbone's embedding dimension. You can check it with `model.embedding_dim` after creating the model, or check the model's config.
+**Important:** All custom heads must implement the `input_dim` property. The factory will automatically validate that the head's `input_dim` matches the backbone's embedding dimension, helping catch dimension mismatches early.
 
 ### Example 6: Override Model Name
 
@@ -196,10 +211,10 @@ build_model(
 - `backbone_cls`: Optional HuggingFace model class. Required if `model_type` is not provided. Ignored if `model_type` is provided (registry default is always used).
 - `head`: 
   - `int`: Creates `LinearHead` with that output dimension
-  - `BaseHead`: Uses provided head instance as-is. Users can subclass `BaseHead`
-               to create custom heads (e.g., MLP, UNET decoder, attention-based, etc.).
-               **Important:** Ensure the head's input dimension matches the backbone's
-               embedding dimension.
+  - `BaseHead`: Uses provided head instance. **Automatically validates** that `head.input_dim`
+               matches the backbone's embedding dimension. Users can subclass `BaseHead` to
+               create custom heads (e.g., MLP, UNET decoder, attention-based, etc.).
+               **All custom heads must implement the `input_dim` property.**
   - `None`: No head (embedding extraction mode)
 - `freeze_backbone`: Freeze all backbone parameters
 - `freeze_layers`: List of layer indices to freeze (0-indexed)
@@ -315,6 +330,7 @@ class UNETDecoderHead(BaseHead):
     """Example: UNET-style decoder head."""
     def __init__(self, input_dim: int, num_classes: int):
         super().__init__()
+        self._input_dim = input_dim  # Store for input_dim property
         # Your custom architecture here
         self.decoder = nn.Sequential(
             nn.Linear(input_dim, 512),
@@ -324,15 +340,20 @@ class UNETDecoderHead(BaseHead):
             nn.Linear(256, num_classes)
         )
     
+    @property
+    def input_dim(self) -> int:
+        """Returns the input dimension of the head."""
+        return self._input_dim
+    
     def forward(self, embeddings: torch.Tensor) -> torch.Tensor:
         return self.decoder(embeddings)
 
-# Use it
+# Use it - input_dim will be automatically validated
 head = UNETDecoderHead(input_dim=768, num_classes=10)
-model = build_model("vanilla_vit", head=head)
+model = build_model("vanilla_vit", head=head)  # Validates input_dim matches
 ```
 
-**Important:** When creating custom heads, ensure the input dimension matches the backbone's embedding dimension. Check `model.embedding_dim` after creation or refer to the model's config.
+**Important:** All custom heads must implement the `input_dim` property. The factory automatically validates that the head's `input_dim` matches the backbone's embedding dimension, helping catch dimension mismatches early.
 
 ---
 

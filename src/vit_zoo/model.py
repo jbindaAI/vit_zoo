@@ -43,7 +43,7 @@ class ViTModel(nn.Module):
         
         # Use IdentityHead if no head provided (embedding extraction mode)
         if head is None:
-            self.head = IdentityHead()
+            self.head = IdentityHead(input_dim=self.backbone.get_embedding_dim())
         elif isinstance(head, BaseHead):
             self.head = head
         else:

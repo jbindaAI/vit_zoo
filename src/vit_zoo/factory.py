@@ -37,19 +37,27 @@ def _create_head_from_config(
     Args:
         head_config: 
             - int: Creates LinearHead with that output dimension
-            - BaseHead: Returns the head instance as-is (user is responsible for
-                       ensuring input dimension matches backbone embedding dimension)
+            - BaseHead: Validates that head's input_dim matches backbone embedding dimension
         input_dim: Input embedding dimension (used when creating LinearHead from int)
     
     Returns:
         BaseHead instance
     
     Raises:
+        ValueError: If provided BaseHead's input_dim doesn't match backbone embedding dimension
         TypeError: If head_config is not int or BaseHead
     """
     if isinstance(head_config, int):
         return LinearHead(input_dim=input_dim, output_dim=head_config)
     elif isinstance(head_config, BaseHead):
+        # Validate input dimension matches
+        head_input_dim = head_config.input_dim
+        if head_input_dim != input_dim:
+            raise ValueError(
+                f"Head input dimension ({head_input_dim}) does not match "
+                f"backbone embedding dimension ({input_dim}). "
+                f"Please create a head with input_dim={input_dim}."
+            )
         return head_config
     else:
         raise TypeError(
@@ -73,7 +81,7 @@ def _create_vit_model(
         backbone_cls: HuggingFace model class (e.g., ViTModel, DeiTModel)
         model_name: HuggingFace model identifier or path
         head: Head configuration (int or BaseHead). If int, creates LinearHead.
-              If BaseHead, uses as-is (user must ensure input dimension matches).
+              If BaseHead, validates that head.input_dim matches backbone embedding dimension.
         freeze_backbone: Freeze all backbone parameters
         freeze_layers: List of layer indices to freeze (0-indexed)
         load_pretrained: Whether to load pretrained weights
@@ -152,8 +160,9 @@ def build_model(
                      Ignored if model_type is provided (registry default is always used).
         head: 
             - int: Creates LinearHead with that output dimension
-            - BaseHead: Uses provided head instance as-is. Users can subclass BaseHead
-                       to create custom heads (e.g., MLP, UNET decoder, etc.)
+            - BaseHead: Uses provided head instance. Validates that head.input_dim matches
+                       backbone embedding dimension. Users can subclass BaseHead to create
+                       custom heads (e.g., MLP, UNET decoder, attention-based, etc.)
             - None: No head (embedding extraction mode)
         freeze_backbone: Freeze all backbone parameters
         freeze_layers: List of layer indices to freeze (0-indexed)

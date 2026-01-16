@@ -27,17 +27,31 @@ def test_build_model_no_head():
 def test_build_model_mlp_head():
     """Test building a model with MLP head."""
     from vit_zoo import MLPHead
+    import torch.nn as nn
     
+    # Test with string activation
     mlp_head = MLPHead(
         input_dim=768,  # vanilla_vit embedding dim
         hidden_dims=[512, 256],
         output_dim=10,
+        activation="gelu",
         dropout=0.1
     )
     model = build_model("vanilla_vit", head=mlp_head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out.shape == (1, 10)
+    
+    # Test with custom nn.Module activation
+    mlp_head_custom = MLPHead(
+        input_dim=768,
+        hidden_dims=[512],
+        output_dim=10,
+        activation=nn.SiLU()  # Custom activation module
+    )
+    model2 = build_model("vanilla_vit", head=mlp_head_custom)
+    out2 = model2(dummy)
+    assert out2.shape == (1, 10)
 
 
 def test_build_model_attention_weights():
@@ -170,7 +184,12 @@ def test_custom_head_subclass():
     class SimpleCustomHead(BaseHead):
         def __init__(self, input_dim: int, output_dim: int):
             super().__init__()
+            self._input_dim = input_dim
             self.fc = nn.Linear(input_dim, output_dim)
+        
+        @property
+        def input_dim(self) -> int:
+            return self._input_dim
         
         def forward(self, embeddings):
             return self.fc(embeddings)
@@ -180,3 +199,19 @@ def test_custom_head_subclass():
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out.shape == (1, 5)
+
+
+def test_head_input_dim_validation():
+    """Test that head input dimension is validated."""
+    # Create head with wrong input dimension
+    wrong_head = LinearHead(input_dim=512, output_dim=10)  # vanilla_vit has 768
+    
+    with pytest.raises(ValueError, match="Head input dimension.*does not match"):
+        build_model("vanilla_vit", head=wrong_head)
+    
+    # Create head with correct input dimension
+    correct_head = LinearHead(input_dim=768, output_dim=10)
+    model = build_model("vanilla_vit", head=correct_head)
+    dummy = torch.rand(1, 3, 224, 224)
+    out = model(dummy)
+    assert out.shape == (1, 10)
