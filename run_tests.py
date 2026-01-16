@@ -22,10 +22,16 @@ def main():
     ]
     
     # Run pytest
-    result = subprocess.run(pytest_args)
-    
-    # Exit with pytest's exit code
-    sys.exit(result.returncode)
+    try:
+        result = subprocess.run(pytest_args, check=False)
+        sys.exit(result.returncode)
+    except FileNotFoundError:
+        print("Error: pytest not found. Please install test dependencies.", file=sys.stderr)
+        print("Run: pip install -e '.[dev]'", file=sys.stderr)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\nTests interrupted by user.", file=sys.stderr)
+        sys.exit(130)  # Standard exit code for SIGINT
 
 
 if __name__ == "__main__":
