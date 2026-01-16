@@ -130,9 +130,9 @@ def test_deit_model():
     assert out.shape == (1, 10)
 
 
-def test_dino_v2_model():
+def test_dinov2_model():
     """Test DINOv2 model creation."""
-    model = build_model("dino_v2_vit", head=10)
+    model = build_model("dinov2_vit", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out.shape == (1, 10)

@@ -24,7 +24,7 @@ class TestModelRegistry:
             "vanilla_vit",
             "deit_vit",
             "dino_vit",
-            "dino_v2_vit",
+            "dinov2_vit",
             "dinov2_reg_vit",
             "clip_vit",
             "dinov3_vit",
@@ -59,9 +59,9 @@ class TestModelRegistry:
         assert backbone_cls == HFViTModel
         assert model_name == "facebook/dino-vitb16"
     
-    def test_registry_dino_v2_vit(self):
-        """Test dino_v2_vit registry entry."""
-        backbone_cls, model_name = MODEL_REGISTRY["dino_v2_vit"]
+    def test_registry_dinov2_vit(self):
+        """Test dinov2_vit registry entry."""
+        backbone_cls, model_name = MODEL_REGISTRY["dinov2_vit"]
         assert backbone_cls == Dinov2Model
         assert model_name == "facebook/dinov2-base"
     
@@ -109,7 +109,7 @@ class TestListModels:
             "vanilla_vit",
             "deit_vit",
             "dino_vit",
-            "dino_v2_vit",
+            "dinov2_vit",
             "dinov2_reg_vit",
             "clip_vit",
             "dinov3_vit",
