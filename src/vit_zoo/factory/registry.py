@@ -6,6 +6,7 @@ from transformers import (
     DeiTModel,
     Dinov2Model,
     Dinov2WithRegistersModel,
+    DINOv3ViTModel,
     CLIPVisionModel,
 )
 
@@ -22,7 +23,7 @@ MODEL_REGISTRY.update({
     "dinov2_vit": (Dinov2Model, "facebook/dinov2-base"),
     "dinov2_reg_vit": (Dinov2WithRegistersModel, "facebook/dinov2-with-registers-base"),
     "clip_vit": (CLIPVisionModel, "openai/clip-vit-base-patch16"),
-    "dinov3_vit": (HFViTModel, "facebook/dinov3-vitb16-pretrain-lvd1689m"),
+    "dinov3_vit": (DINOv3ViTModel, "facebook/dinov3-vitb16-pretrain-lvd1689m"),
 })
 
 
