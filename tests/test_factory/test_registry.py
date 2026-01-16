@@ -7,6 +7,7 @@ from transformers import (
     DeiTModel,
     Dinov2Model,
     Dinov2WithRegistersModel,
+    DINOv3ViTModel,
     CLIPVisionModel,
 )
 
@@ -80,7 +81,7 @@ class TestModelRegistry:
     def test_registry_dinov3_vit(self):
         """Test dinov3_vit registry entry."""
         backbone_cls, model_name = MODEL_REGISTRY["dinov3_vit"]
-        assert backbone_cls == HFViTModel
+        assert backbone_cls == DINOv3ViTModel
         assert model_name == "facebook/dinov3-vitb16-pretrain-lvd1689m"
     
     def test_registry_backbone_classes_are_callable(self):
