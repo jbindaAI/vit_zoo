@@ -9,7 +9,7 @@ A clean, extensible, and reusable factory for creating HuggingFace-based Vision 
 - **Easy model construction** via `build_model(...)` - create models in minutes
 - **Flexible head support** - Linear, MLP, or custom heads
 - **Common interface** for different ViT flavors from HuggingFace
-- **Backbone freezing** - full or layer-wise freezing support
+- **Backbone freezing** - freeze all backbone parameters
 - **Attention weights** - easy extraction of attention weights
 - **Embedding extraction** - get embeddings without classification head
 - **PyTorch Lightning ready** - works seamlessly with Lightning modules
@@ -166,23 +166,6 @@ model = build_model(
 )
 ```
 
-### Example 8: Layer-wise Freezing
-
-```python
-from vit_zoo import build_model
-
-# Freeze first 6 layers, train rest
-model = build_model(
-    "vanilla_vit",
-    head=10,
-    freeze_layers=[0, 1, 2, 3, 4, 5]  # Freeze layers 0-5
-)
-
-# Or freeze/unfreeze programmatically
-model.freeze_layers([6, 7, 8], freeze=True)   # Freeze layers 6-8
-model.freeze_backbone(freeze=False)          # Unfreeze entire backbone
-```
-
 ---
 
 ## API Reference
@@ -198,7 +181,6 @@ build_model(
     backbone_cls: Optional[Type[ViTBackboneProtocol]] = None,
     head: Optional[Union[int, BaseHead]] = None,
     freeze_backbone: bool = False,
-    freeze_layers: Optional[List[int]] = None,
     load_pretrained: bool = True,
     backbone_dropout: float = 0.0,
     config_kwargs: Optional[Dict[str, Any]] = None,
@@ -217,7 +199,6 @@ build_model(
                **All custom heads must implement the `input_dim` property.**
   - `None`: No head (embedding extraction mode)
 - `freeze_backbone`: Freeze all backbone parameters
-- `freeze_layers`: List of layer indices to freeze (0-indexed)
 - `load_pretrained`: Whether to load pretrained weights
 - `backbone_dropout`: Dropout probability for backbone
 - `config_kwargs`: Extra config options passed to model config or from_pretrained().

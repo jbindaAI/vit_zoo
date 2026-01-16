@@ -1,8 +1,8 @@
 """Backbone abstraction layer for ViT models."""
 
 from typing import Type, Dict, Any, Optional
-import torch
 from torch import nn
+import torch
 
 from .interfaces import ViTBackboneProtocol
 from .utils import set_encoder_dropout_p

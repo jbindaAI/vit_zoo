@@ -1,7 +1,7 @@
 """Head implementations for ViT models."""
 
 from abc import ABC, abstractmethod
-from typing import Optional, List, Union, Literal
+from typing import List, Union, Literal
 import torch
 from torch import nn
 

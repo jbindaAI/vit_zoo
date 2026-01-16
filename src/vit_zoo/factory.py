@@ -1,6 +1,6 @@
 """Factory functions for creating ViT models."""
 
-from typing import Optional, Union, Type, Tuple, Dict, Any
+from typing import Optional, Union, Type, Dict, Any
 from transformers import (
     ViTModel as HFViTModel,
     DeiTModel,
@@ -30,7 +30,7 @@ MODEL_REGISTRY.update({
 
 def _create_head_from_config(
     head_config: Union[int, BaseHead],
-    input_dim: int
+    backbone_embedding_dim: int
 ) -> BaseHead:
     """Create a head from simple input formats.
     
@@ -38,31 +38,26 @@ def _create_head_from_config(
         head_config: 
             - int: Creates LinearHead with that output dimension
             - BaseHead: Validates that head's input_dim matches backbone embedding dimension
-        input_dim: Input embedding dimension (used when creating LinearHead from int)
+        backbone_embedding_dim: Backbone embedding dimension
     
     Returns:
         BaseHead instance
     
     Raises:
-        ValueError: If provided BaseHead's input_dim doesn't match backbone embedding dimension
-        TypeError: If head_config is not int or BaseHead
+        ValueError: If provided BaseHead's input_dim doesn't match backbone embedding dimension.
     """
     if isinstance(head_config, int):
-        return LinearHead(input_dim=input_dim, output_dim=head_config)
-    elif isinstance(head_config, BaseHead):
+        return LinearHead(input_dim=backbone_embedding_dim, output_dim=head_config)
+    else:
         # Validate input dimension matches
         head_input_dim = head_config.input_dim
-        if head_input_dim != input_dim:
+        if head_input_dim != backbone_embedding_dim:
             raise ValueError(
                 f"Head input dimension ({head_input_dim}) does not match "
-                f"backbone embedding dimension ({input_dim}). "
-                f"Please create a head with input_dim={input_dim}."
+                f"backbone embedding dimension ({backbone_embedding_dim}). "
+                f"Please create a head with input_dim={backbone_embedding_dim}."
             )
         return head_config
-    else:
-        raise TypeError(
-            f"head must be int or BaseHead, got {type(head_config)}"
-        )
 
 
 def _create_vit_model(
@@ -70,7 +65,6 @@ def _create_vit_model(
     model_name: str,
     head: Optional[Union[int, BaseHead]] = None,
     freeze_backbone: bool = False,
-    freeze_layers: Optional[list] = None,
     load_pretrained: bool = True,
     backbone_dropout: float = 0.0,
     config_kwargs: Optional[Dict[str, Any]] = None,
@@ -83,7 +77,6 @@ def _create_vit_model(
         head: Head configuration (int or BaseHead). If int, creates LinearHead.
               If BaseHead, validates that head.input_dim matches backbone embedding dimension.
         freeze_backbone: Freeze all backbone parameters
-        freeze_layers: List of layer indices to freeze (0-indexed)
         load_pretrained: Whether to load pretrained weights
         backbone_dropout: Dropout probability for backbone
         config_kwargs: Extra config options passed to model config or from_pretrained().
@@ -110,7 +103,6 @@ def _create_vit_model(
         backbone=backbone,
         head=head_instance,
         freeze_backbone=freeze_backbone,
-        freeze_layers=freeze_layers,
     )
 
 
@@ -120,7 +112,6 @@ def build_model(
     backbone_cls: Optional[Type[ViTBackboneProtocol]] = None,
     head: Optional[Union[int, BaseHead]] = None,
     freeze_backbone: bool = False,
-    freeze_layers: Optional[list] = None,
     load_pretrained: bool = True,
     backbone_dropout: float = 0.0,
     config_kwargs: Optional[Dict[str, Any]] = None,
@@ -165,7 +156,6 @@ def build_model(
                        custom heads (e.g., MLP, UNET decoder, attention-based, etc.)
             - None: No head (embedding extraction mode)
         freeze_backbone: Freeze all backbone parameters
-        freeze_layers: List of layer indices to freeze (0-indexed)
         load_pretrained: Whether to load pretrained weights
         backbone_dropout: Dropout probability for backbone
         config_kwargs: Extra config options passed to model config or from_pretrained().
@@ -234,7 +224,6 @@ def build_model(
         model_name=final_model_name,
         head=head,
         freeze_backbone=freeze_backbone,
-        freeze_layers=freeze_layers,
         load_pretrained=load_pretrained,
         backbone_dropout=backbone_dropout,
         config_kwargs=config_kwargs,

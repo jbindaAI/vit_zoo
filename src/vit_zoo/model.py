@@ -1,12 +1,11 @@
 """Main ViT model class with flexible head and backbone."""
 
-from typing import Optional, List, Union, Dict, Any
+from typing import Optional, Union, Dict, Any
 import torch
 from torch import nn
 
 from .backbone import ViTBackbone
 from .heads import BaseHead, IdentityHead
-from .freezing import freeze_backbone, freeze_layers
 
 
 class ViTModel(nn.Module):
@@ -14,7 +13,7 @@ class ViTModel(nn.Module):
     
     This class provides a clean, extensible interface for ViT models with:
     - Custom heads (Linear, MLP, or custom implementations)
-    - Backbone freezing (full or partial layer-wise)
+    - Backbone freezing
     - Attention weight extraction
     - Embedding extraction
     
@@ -22,7 +21,6 @@ class ViTModel(nn.Module):
         backbone: ViTBackbone instance
         head: Optional head module. If None, IdentityHead is used (embedding extraction mode)
         freeze_backbone: If True, freeze all backbone parameters at initialization
-        freeze_layers: List of layer indices to freeze at initialization (0-indexed)
     """
     
     def __init__(
@@ -30,33 +28,20 @@ class ViTModel(nn.Module):
         backbone: ViTBackbone,
         head: Optional[BaseHead] = None,
         freeze_backbone: bool = False,
-        freeze_layers: Optional[List[int]] = None,
     ) -> None:
         super().__init__()
-        
-        if not isinstance(backbone, ViTBackbone):
-            raise TypeError(
-                f"backbone must be an instance of ViTBackbone, got {type(backbone)}"
-            )
         
         self.backbone = backbone
         
         # Use IdentityHead if no head provided (embedding extraction mode)
         if head is None:
             self.head = IdentityHead(input_dim=self.backbone.get_embedding_dim())
-        elif isinstance(head, BaseHead):
-            self.head = head
         else:
-            raise TypeError(
-                f"head must be an instance of BaseHead or None, got {type(head)}"
-            )
+            self.head = head
         
         # Apply freezing if requested
         if freeze_backbone:
             self.freeze_backbone(freeze=True)
-        
-        if freeze_layers is not None:
-            self.freeze_layers(freeze_layers, freeze=True)
     
     @property
     def embedding_dim(self) -> int:
@@ -69,16 +54,8 @@ class ViTModel(nn.Module):
         Args:
             freeze: If True, freeze parameters; if False, unfreeze them
         """
-        freeze_backbone(self, freeze=freeze)
-    
-    def freeze_layers(self, layer_indices: List[int], freeze: bool = True) -> None:
-        """Freeze or unfreeze specific transformer layers by index.
-        
-        Args:
-            layer_indices: List of layer indices to freeze/unfreeze (0-indexed)
-            freeze: If True, freeze parameters; if False, unfreeze them
-        """
-        freeze_layers(self, layer_indices=layer_indices, freeze=freeze)
+        for param in self.backbone.parameters():
+            param.requires_grad = not freeze
     
     def forward(
         self,
