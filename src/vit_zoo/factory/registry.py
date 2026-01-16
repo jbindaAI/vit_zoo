@@ -19,7 +19,7 @@ MODEL_REGISTRY.update({
     "vanilla_vit": (HFViTModel, "google/vit-base-patch16-224"),
     "deit_vit": (DeiTModel, "facebook/deit-base-distilled-patch16-224"),
     "dino_vit": (HFViTModel, "facebook/dino-vitb16"),
-    "dino_v2_vit": (Dinov2Model, "facebook/dinov2-base"),
+    "dinov2_vit": (Dinov2Model, "facebook/dinov2-base"),
     "dinov2_reg_vit": (Dinov2WithRegistersModel, "facebook/dinov2-with-registers-base"),
     "clip_vit": (CLIPVisionModel, "openai/clip-vit-base-patch16"),
     "dinov3_vit": (HFViTModel, "facebook/dinov3-vitb16-pretrain-lvd1689m"),
