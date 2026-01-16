@@ -1,17 +1,6 @@
 """Vision Transformer Zoo - Easy-to-use ViT model factory."""
 
+# Export main model class at package level for convenience
 from .model import ViTModel
-from .backbone import ViTBackbone
-from .heads import BaseHead, LinearHead, MLPHead, IdentityHead
-from .factory import build_model, list_models
 
-__all__ = [
-    "ViTModel",
-    "ViTBackbone",
-    "BaseHead",
-    "LinearHead",
-    "MLPHead",
-    "IdentityHead",
-    "build_model",
-    "list_models",
-]
+__all__ = ["ViTModel"]

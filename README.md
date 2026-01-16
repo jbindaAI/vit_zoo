@@ -34,7 +34,7 @@ pip install -e .
 ### Example 1: Simple Classification (Lightning-ready)
 
 ```python
-from vit_zoo import build_model
+from vit_zoo.factory import build_model
 
 # Create a model with 10 classes, freeze backbone
 model = build_model("vanilla_vit", head=10, freeze_backbone=True)
@@ -54,7 +54,8 @@ class ViTLightningModule(pl.LightningModule):
 ### Example 2: Custom MLP Head
 
 ```python
-from vit_zoo import build_model, MLPHead
+from vit_zoo.factory import build_model
+from vit_zoo.components import MLPHead
 import torch.nn as nn
 
 # Create MLP head with string activation (most common)
@@ -80,7 +81,7 @@ model = build_model("dino_v2_vit", head=mlp_head)
 ### Example 3: Embedding Extraction Only
 
 ```python
-from vit_zoo import build_model
+from vit_zoo.factory import build_model
 
 # No head - just extract embeddings
 model = build_model("clip_vit", head=None)
@@ -92,7 +93,7 @@ embeddings = outputs["embeddings"]  # Shape: (batch_size, embedding_dim)
 ### Example 4: Attention Weights
 
 ```python
-from vit_zoo import build_model
+from vit_zoo.factory import build_model
 
 # For attention weights, you may need to set attn_implementation='eager'
 model = build_model(
@@ -111,7 +112,8 @@ attentions = outputs["attentions"]     # Tuple of attention tensors (may be None
 You can subclass `BaseHead` to create any custom head architecture:
 
 ```python
-from vit_zoo import build_model, BaseHead
+from vit_zoo.factory import build_model
+from vit_zoo.components import BaseHead
 import torch.nn as nn
 import torch
 
@@ -142,7 +144,7 @@ model = build_model("vanilla_vit", head=head)  # Validates input_dim matches
 ### Example 6: Override Model Name
 
 ```python
-from vit_zoo import build_model
+from vit_zoo.factory import build_model
 
 # Use a different model variant from the registry default
 model = build_model(
@@ -155,7 +157,7 @@ model = build_model(
 ### Example 7: Direct Usage (Any HuggingFace Model)
 
 ```python
-from vit_zoo import build_model
+from vit_zoo.factory import build_model
 from transformers import ViTModel
 
 # Use any HuggingFace model directly without registry
@@ -254,7 +256,7 @@ You can override the default model name or use any HuggingFace model directly (s
 You can use any HuggingFace Vision Transformer model directly without registering it:
 
 ```python
-from vit_zoo import build_model
+from vit_zoo.factory import build_model
 from transformers import ViTModel, DeiTModel
 
 # Use any ViT variant
@@ -303,7 +305,8 @@ You can create any custom head architecture by subclassing `BaseHead`. This is u
 
 **Example:**
 ```python
-from vit_zoo import BaseHead, build_model
+from vit_zoo.factory import build_model
+from vit_zoo.components import BaseHead
 import torch.nn as nn
 import torch
 

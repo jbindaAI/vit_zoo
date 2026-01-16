@@ -1,31 +1,12 @@
 """Factory functions for creating ViT models."""
 
 from typing import Optional, Union, Type, Dict, Any
-from transformers import (
-    ViTModel as HFViTModel,
-    DeiTModel,
-    Dinov2Model,
-    Dinov2WithRegistersModel,
-    CLIPVisionModel,
-)
 
-from .model_registry import MODEL_REGISTRY
-from .backbone import ViTBackbone
-from .model import ViTModel
-from .heads import BaseHead, LinearHead
-from .interfaces import ViTBackboneProtocol
-
-
-# Registry stores (backbone_class, default_model_name) tuples
-MODEL_REGISTRY.update({
-    "vanilla_vit": (HFViTModel, "google/vit-base-patch16-224"),
-    "deit_vit": (DeiTModel, "facebook/deit-base-distilled-patch16-224"),
-    "dino_vit": (HFViTModel, "facebook/dino-vitb16"),
-    "dino_v2_vit": (Dinov2Model, "facebook/dinov2-base"),
-    "dinov2_reg_vit": (Dinov2WithRegistersModel, "facebook/dinov2-with-registers-base"),
-    "clip_vit": (CLIPVisionModel, "openai/clip-vit-base-patch16"),
-    "dinov3_vit": (HFViTModel, "facebook/dinov3-vitb16-pretrain-lvd1689m"),
-})
+from .registry import MODEL_REGISTRY
+from ..components.backbone import ViTBackbone
+from ..model import ViTModel
+from ..components.heads import BaseHead, LinearHead
+from ..types.interfaces import ViTBackboneProtocol
 
 
 def _create_head_from_config(
@@ -228,12 +209,3 @@ def build_model(
         backbone_dropout=backbone_dropout,
         config_kwargs=config_kwargs,
     )
-
-
-def list_models() -> list:
-    """List all registered model types.
-    
-    Returns:
-        List of registered model type strings
-    """
-    return list(MODEL_REGISTRY.keys())

@@ -4,8 +4,7 @@ from typing import Type, Dict, Any, Optional
 from torch import nn
 import torch
 
-from .interfaces import ViTBackboneProtocol
-from .utils import set_encoder_dropout_p
+from ..types.interfaces import ViTBackboneProtocol
 
 
 class ViTBackbone(nn.Module):
@@ -46,9 +45,10 @@ class ViTBackbone(nn.Module):
         
         # Apply dropout if specified
         if backbone_dropout > 0.0:
-            self.backbone.apply(
-                lambda m: set_encoder_dropout_p(m, dropout_p=backbone_dropout)
-            )
+            def set_dropout(module):
+                if isinstance(module, nn.Dropout):
+                    module.p = backbone_dropout
+            self.backbone.apply(set_dropout)
     
     def get_embedding_dim(self) -> int:
         """Returns the embedding dimension of the backbone.

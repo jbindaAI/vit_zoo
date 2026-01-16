@@ -2,7 +2,9 @@
 
 import torch
 import pytest
-from vit_zoo import build_model, ViTModel, LinearHead, MLPHead, IdentityHead
+from vit_zoo import ViTModel
+from vit_zoo.factory import build_model
+from vit_zoo.components import LinearHead, MLPHead, IdentityHead
 from transformers import ViTModel as HFViTModel
 
 
@@ -26,7 +28,7 @@ def test_build_model_no_head():
 
 def test_build_model_mlp_head():
     """Test building a model with MLP head."""
-    from vit_zoo import MLPHead
+    from vit_zoo.components import MLPHead
     import torch.nn as nn
     
     # Test with string activation
@@ -56,7 +58,7 @@ def test_build_model_mlp_head():
 
 def test_build_model_attention_weights():
     """Test extracting attention weights."""
-    model = build_model("vanilla_vit", head=10)
+    model = build_model("vanilla_vit", head=10, config_kwargs={"attn_implementation": "eager"})
     dummy = torch.rand(1, 3, 224, 224)
     outputs = model(dummy, output_attentions=True)
     
@@ -64,10 +66,10 @@ def test_build_model_attention_weights():
     assert "predictions" in outputs
     assert "attentions" in outputs
     assert outputs["predictions"].shape == (1, 10)
-    # Attentions may be None if the model doesn't support them, or a tuple if available
-    if outputs["attentions"] is not None:
-        assert isinstance(outputs["attentions"], tuple)
-        assert len(outputs["attentions"]) > 0
+    
+    assert outputs["attentions"] is not None
+    assert isinstance(outputs["attentions"], tuple)
+    assert len(outputs["attentions"]) > 0
 
 
 def test_build_model_embeddings():
@@ -107,7 +109,7 @@ def test_build_model_custom_head():
 
 def test_list_models():
     """Test listing available models."""
-    from vit_zoo import list_models
+    from vit_zoo.factory import list_models
     models = list_models()
     assert isinstance(models, list)
     assert len(models) > 0
@@ -178,7 +180,7 @@ def test_dinov2_reg_vit():
 
 def test_custom_head_subclass():
     """Test using a custom head subclass."""
-    from vit_zoo import BaseHead
+    from vit_zoo.components import BaseHead
     import torch.nn as nn
     
     class SimpleCustomHead(BaseHead):

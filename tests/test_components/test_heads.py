@@ -3,7 +3,7 @@
 import torch
 import pytest
 import torch.nn as nn
-from vit_zoo.heads import BaseHead, LinearHead, MLPHead, IdentityHead
+from vit_zoo.components import BaseHead, LinearHead, MLPHead, IdentityHead
 
 
 class TestBaseHead:

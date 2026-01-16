@@ -4,8 +4,8 @@ from typing import Optional, Union, Dict, Any
 import torch
 from torch import nn
 
-from .backbone import ViTBackbone
-from .heads import BaseHead, IdentityHead
+from .components.backbone import ViTBackbone
+from .components.heads import BaseHead, IdentityHead
 
 
 class ViTModel(nn.Module):
