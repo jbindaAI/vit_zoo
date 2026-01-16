@@ -1,11 +1,7 @@
-from typing import Dict, Callable
-from .vision_base import VisionTransformer
+"""Model registry for ViT models."""
 
-ModelFn = Callable[..., VisionTransformer]
-MODEL_REGISTRY: Dict[str, ModelFn] = {}
+from typing import Dict, Tuple, Type
+from .interfaces import ViTBackboneProtocol
 
-def register_model(name: str):
-    def decorator(fn: ModelFn):
-        MODEL_REGISTRY[name] = fn
-        return fn
-    return decorator
+# Registry stores (backbone_class, default_model_name) tuples
+MODEL_REGISTRY: Dict[str, Tuple[Type[ViTBackboneProtocol], str]] = {}
