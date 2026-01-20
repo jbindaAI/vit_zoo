@@ -2,12 +2,6 @@
   <img src="https://raw.githubusercontent.com/jbindaAI/vit_zoo/main/assets/vit_zoo_logo.png" alt="vit_zoo logo" width="220" />
 </p>
 
-<h2 align="center">vit_zoo</h2>
-
-<p align="center">
-  <strong>Vision Transformer model factory (HuggingFace backbones + pluggable heads)</strong>
-</p>
-
 <p align="center">
   <a href="https://pypi.org/project/vit-zoo/"><img alt="PyPI" src="https://img.shields.io/pypi/v/vit-zoo.svg" /></a>
   <a href="https://pypi.org/project/vit-zoo/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/vit-zoo.svg" /></a>
