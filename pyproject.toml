@@ -36,6 +36,10 @@ classifiers = [
 
 [project.urls]
 Source = "https://github.com/jbindaAI/vit_zoo"
+Issues = "https://github.com/jbindaAI/vit_zoo/issues"
+CI = "https://github.com/jbindaAI/vit_zoo/actions"
+Changelog = "https://github.com/jbindaAI/vit_zoo/releases"
+PyPI = "https://pypi.org/project/vit-zoo/"
 
 [project.optional-dependencies]
 dev = [

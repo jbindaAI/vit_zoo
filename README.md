@@ -1,29 +1,48 @@
-# Vision Transformer Zoo
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jbindaAI/vit_zoo/main/assets/vit_zoo_logo.png" alt="vit_zoo logo" width="220" />
+</p>
+
+<h2 align="center">vit_zoo</h2>
+
+<p align="center">
+  <strong>Vision Transformer model factory (HuggingFace backbones + pluggable heads)</strong>
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/vit-zoo/"><img alt="PyPI" src="https://img.shields.io/pypi/v/vit-zoo.svg" /></a>
+  <a href="https://pypi.org/project/vit-zoo/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/vit-zoo.svg" /></a>
+  <a href="https://github.com/jbindaAI/vit_zoo/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/jbindaAI/vit_zoo/actions/workflows/tests.yml/badge.svg" /></a>
+  <a href="https://github.com/jbindaAI/vit_zoo"><img alt="Source" src="https://img.shields.io/badge/source-GitHub-0B1020" /></a>
+</p>
 
 A clean, extensible factory for creating HuggingFace-based Vision Transformer models (ViT, DeiT, DINO, DINOv2, DINOv3, CLIP) with flexible heads and easy backbone freezing.
 
----
-
-## Installation (PyPI)
+## Installation
 
 ```bash
-pip3 install vit_zoo
+pip install vit_zoo
 ```
-## Installation (From source)
+
+From source:
 
 ```bash
-git clone git@github.com:jbindaAI/vit_zoo.git
+git clone https://github.com/jbindaAI/vit_zoo.git
 cd vit_zoo
 pip install -e .
 ```
 
 For development: `pip install -e ".[dev]"`
 
----
+## Quick start
 
-## Quick Start
+```python
+from vit_zoo.factory import build_model
 
-### Basic Usage
+model = build_model("dinov2_vit", head=10, freeze_backbone=True)
+logits = model(images)  # (batch_size, 10)
+```
+
+### Basic usage
 
 ```python
 from vit_zoo.factory import build_model
@@ -106,8 +125,6 @@ model = build_model(
 )
 ```
 
----
-
 ## API Reference
 
 ### `build_model()`
@@ -161,8 +178,6 @@ from vit_zoo.factory import list_models
 available = list_models()  # Returns list of registered model types
 ```
 
----
-
 ## Supported Models
 
 - `vanilla_vit`: Google ViT (`google/vit-base-patch16-224`)
@@ -173,8 +188,6 @@ available = list_models()  # Returns list of registered model types
 - `dinov3_vit`: Facebook DINOv3 (`facebook/dinov3-vitb16-pretrain-lvd1689m`)
 - `clip_vit`: OpenAI CLIP Vision (`openai/clip-vit-base-patch16`)
 
----
-
 ## Import Patterns
 
 ```python
@@ -183,8 +196,6 @@ from vit_zoo.factory import build_model, list_models
 from vit_zoo.components import ViTBackbone, BaseHead, LinearHead, MLPHead, IdentityHead
 ```
 
----
-
 ## Available Heads
 
 - `LinearHead`: Simple linear layer (auto-created when `head=int`)
@@ -192,8 +203,6 @@ from vit_zoo.components import ViTBackbone, BaseHead, LinearHead, MLPHead, Ident
 - `IdentityHead`: Returns embeddings unchanged
 
 All heads must implement `input_dim` property. Custom heads by subclassing `BaseHead`.
-
----
 
 ## License
 
