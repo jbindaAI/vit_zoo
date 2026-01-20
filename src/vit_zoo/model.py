@@ -68,12 +68,16 @@ class ViTModel(nn.Module):
         Args:
             pixel_values: Input image tensor of shape (batch_size, channels, height, width)
             output_attentions: Whether to return attention weights
-            output_embeddings: Whether to return embeddings
+            output_embeddings: Whether to return token embeddings for all output tokens
         
         Returns:
             - If output_attentions=False and output_embeddings=False: predictions tensor
             - If output_attentions=True or output_embeddings=True: dict with keys:
               'predictions', 'attentions' (optional), 'embeddings' (optional)
+              
+              When output_embeddings=True, 'embeddings' is a tensor of shape
+              (batch_size, seq_len, embedding_dim) containing embeddings for all output
+              tokens (CLS + any special tokens like distillation/register tokens + patch tokens).
         """
         # Forward through backbone
         backbone_outputs = self.backbone(
@@ -82,11 +86,11 @@ class ViTModel(nn.Module):
             output_hidden_states=False,
         )
         
-        # Extract CLS token embedding
-        embeddings = self.backbone.get_cls_token_embedding(backbone_outputs)
+        # Extract CLS token embedding (used for predictions)
+        cls_embedding = self.backbone.get_cls_token_embedding(backbone_outputs)
         
         # Forward through head
-        predictions = self.head(embeddings)
+        predictions = self.head(cls_embedding)
         
         # Return format based on requested outputs
         if output_attentions or output_embeddings:
@@ -102,7 +106,11 @@ class ViTModel(nn.Module):
                     result["attentions"] = None
             
             if output_embeddings:
-                result["embeddings"] = embeddings
+                if "last_hidden_state" not in backbone_outputs:
+                    raise ValueError(
+                        "Backbone output must contain 'last_hidden_state' to return token embeddings"
+                    )
+                result["embeddings"] = backbone_outputs["last_hidden_state"]
             
             return result
         else:

@@ -82,7 +82,8 @@ def test_build_model_embeddings():
     assert "predictions" in outputs
     assert "embeddings" in outputs
     assert outputs["predictions"].shape == (1, 10)
-    assert len(outputs["embeddings"].shape) == 2
+    assert len(outputs["embeddings"].shape) == 3
+    assert outputs["embeddings"].shape[0] == 1
 
 
 def test_build_model_freeze_backbone():

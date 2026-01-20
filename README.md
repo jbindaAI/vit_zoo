@@ -68,7 +68,8 @@ model = build_model("dinov2_vit", head=mlp_head)
 ```python
 model = build_model("clip_vit", head=None)
 outputs = model(images, output_embeddings=True)
-embeddings = outputs["embeddings"]  # Shape: (batch_size, embedding_dim)
+embeddings = outputs["embeddings"]  # Shape: (batch_size, seq_len, embedding_dim)
+cls_embedding = embeddings[:, 0, :]  # Shape: (batch_size, embedding_dim)
 ```
 
 ### Attention Weights

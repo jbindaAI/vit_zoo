@@ -93,14 +93,22 @@ class TestViTModel:
         head = LinearHead(input_dim=768, output_dim=5)
         model = ViTModel(backbone=backbone, head=head)
         
+        model.eval()
         pixel_values = torch.randn(3, 3, 224, 224)
-        outputs = model(pixel_values, output_embeddings=True)
+        with torch.no_grad():
+            outputs = model(pixel_values, output_embeddings=True)
         
         assert isinstance(outputs, dict)
         assert "predictions" in outputs
         assert "embeddings" in outputs
         assert outputs["predictions"].shape == (3, 5)
-        assert outputs["embeddings"].shape == (3, 768)
+        assert outputs["embeddings"].shape == (3, 197, 768)
+        
+        # Predictions should be computed from the backbone's CLS embedding
+        with torch.no_grad():
+            backbone_outputs = model.backbone(pixel_values, output_attentions=False, output_hidden_states=False)
+            cls_embedding = model.backbone.get_cls_token_embedding(backbone_outputs)
+            torch.testing.assert_close(outputs["predictions"], model.head(cls_embedding))
     
     def test_vit_model_forward_with_attentions(self):
         """Test ViTModel forward pass with attention weights."""
@@ -134,15 +142,23 @@ class TestViTModel:
         head = LinearHead(input_dim=768, output_dim=10)
         model = ViTModel(backbone=backbone, head=head)
         
+        model.eval()
         pixel_values = torch.randn(1, 3, 224, 224)
-        outputs = model(pixel_values, output_attentions=True, output_embeddings=True)
+        with torch.no_grad():
+            outputs = model(pixel_values, output_attentions=True, output_embeddings=True)
         
         assert isinstance(outputs, dict)
         assert "predictions" in outputs
         assert "attentions" in outputs
         assert "embeddings" in outputs
         assert outputs["predictions"].shape == (1, 10)
-        assert outputs["embeddings"].shape == (1, 768)
+        assert outputs["embeddings"].shape == (1, 197, 768)
+        
+        # Predictions should be computed from the backbone's CLS embedding
+        with torch.no_grad():
+            backbone_outputs = model.backbone(pixel_values, output_attentions=True, output_hidden_states=False)
+            cls_embedding = model.backbone.get_cls_token_embedding(backbone_outputs)
+            torch.testing.assert_close(outputs["predictions"], model.head(cls_embedding))
     
     def test_vit_model_forward_different_batch_sizes(self):
         """Test ViTModel forward pass with different batch sizes."""
