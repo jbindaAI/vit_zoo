@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jbindaAI/vit_zoo/main/assets/vit_zoo_logo.png" alt="vit_zoo logo" width="220" />
+  <img src="https://raw.githubusercontent.com/jbindaAI/vit_zoo/main/assets/cropped_vit_zoo_logo.png" alt="vit_zoo logo" width="220" />
 </p>
 
 <p align="center">
