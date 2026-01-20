@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jbindaAI/vit_zoo/main/assets/cropped_vit_zoo_logo.png" alt="vit_zoo logo" width="220" />
+  <img src="https://raw.githubusercontent.com/jbindaAI/vit_zoo/main/assets/vit_zoo_logo_v2.png" alt="vit_zoo logo" width="220" />
 </p>
 
 <p align="center">
@@ -173,7 +173,7 @@ from vit_zoo.factory import list_models
 available = list_models()  # Returns list of registered model types
 ```
 
-## Supported Models
+## Default Models
 
 - `vanilla_vit`: Google ViT (`google/vit-base-patch16-224`)
 - `deit_vit`: Facebook DeiT (`facebook/deit-base-distilled-patch16-224`)
