@@ -4,7 +4,6 @@ import torch
 import pytest
 from vit_zoo import ViTModel
 from vit_zoo.components import ViTBackbone, LinearHead, MLPHead, IdentityHead
-from transformers import ViTModel as HFViTModel
 
 
 class TestViTModel:
@@ -13,7 +12,6 @@ class TestViTModel:
     def test_vit_model_initialization_with_head(self):
         """Test ViTModel initialization with a head."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -27,7 +25,6 @@ class TestViTModel:
     def test_vit_model_initialization_without_head(self):
         """Test ViTModel initialization without head (uses IdentityHead)."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -40,7 +37,6 @@ class TestViTModel:
     def test_vit_model_initialization_with_freeze_backbone(self):
         """Test ViTModel initialization with frozen backbone."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -58,7 +54,6 @@ class TestViTModel:
     def test_vit_model_embedding_dim_property(self):
         """Test embedding_dim property."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -70,7 +65,6 @@ class TestViTModel:
     def test_vit_model_forward_simple(self):
         """Test ViTModel forward pass with simple output."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -87,7 +81,6 @@ class TestViTModel:
         """Test ViTModel forward pass with embeddings output."""
         # Model exposes token embeddings under 'last_hidden_state' for consistency with backbone.
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -114,7 +107,6 @@ class TestViTModel:
     def test_vit_model_forward_with_attentions(self):
         """Test ViTModel forward pass with attention weights."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False,
             config_kwargs={"attn_implementation": "eager"}
@@ -135,7 +127,6 @@ class TestViTModel:
     def test_vit_model_forward_with_attentions_and_embeddings(self):
         """Test ViTModel forward pass with both attention weights and embeddings."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False,
             config_kwargs={"attn_implementation": "eager"}
@@ -164,7 +155,6 @@ class TestViTModel:
     def test_vit_model_forward_different_batch_sizes(self):
         """Test ViTModel forward pass with different batch sizes."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -179,7 +169,6 @@ class TestViTModel:
     def test_vit_model_freeze_backbone(self):
         """Test freeze_backbone method."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -203,7 +192,6 @@ class TestViTModel:
     def test_vit_model_freeze_backbone_default(self):
         """Test freeze_backbone method with default parameter (freeze=True)."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -218,7 +206,6 @@ class TestViTModel:
     def test_vit_model_with_mlp_head(self):
         """Test ViTModel with MLP head."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -233,7 +220,6 @@ class TestViTModel:
     def test_vit_model_with_identity_head(self):
         """Test ViTModel with IdentityHead (embedding extraction)."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -249,7 +235,6 @@ class TestViTModel:
     def test_vit_model_gradient_flow(self):
         """Test that gradients flow through ViTModel."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -269,7 +254,6 @@ class TestViTModel:
     def test_vit_model_eval_mode(self):
         """Test ViTModel in eval mode."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -286,7 +270,6 @@ class TestViTModel:
     def test_vit_model_train_mode(self):
         """Test ViTModel in train mode."""
         backbone = ViTBackbone(
-            backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )

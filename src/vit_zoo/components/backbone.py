@@ -1,10 +1,10 @@
 """Backbone abstraction layer for ViT models."""
 
-from typing import Type, Dict, Any, Optional
+from typing import Dict, Any, Optional, Type
 from torch import nn
 import torch
 
-from ..types.interfaces import ViTBackboneProtocol
+from transformers import AutoModel, AutoConfig
 
 
 class ViTBackbone(nn.Module):
@@ -12,11 +12,14 @@ class ViTBackbone(nn.Module):
     
     This class provides a unified interface for different HuggingFace
     ViT model implementations, handling differences in output formats
-    and initialization.
+    and initialization. Uses AutoModel to auto-detect model type from
+    the HuggingFace model identifier, or a specific class when provided.
     
     Args:
-        backbone_cls: HuggingFace model class (e.g., ViTModel, DeiTModel)
         model_name: HuggingFace model identifier or path
+        backbone_cls: Optional HuggingFace model class (e.g., CLIPVisionModel).
+                     When provided, used instead of AutoModel. Use for multi-modal
+                     models like CLIP where AutoModel loads the full model.
         load_pretrained: Whether to load pretrained weights
         config_kwargs: Additional arguments passed to model config or from_pretrained().
                       Can include 'attn_implementation' to control attention mechanism
@@ -26,22 +29,24 @@ class ViTBackbone(nn.Module):
     
     def __init__(
         self,
-        backbone_cls: Type[ViTBackboneProtocol],
         model_name: str,
+        backbone_cls: Optional[Type] = None,
         load_pretrained: bool = True,
         config_kwargs: Optional[Dict[str, Any]] = None,
         backbone_dropout: float = 0.0,
     ) -> None:
         super().__init__()
         config_kwargs = config_kwargs or {}
-        
+        model_cls = backbone_cls if backbone_cls is not None else AutoModel
+        config_cls = backbone_cls.config_class if backbone_cls is not None else AutoConfig
+
         # Load model (pretrained or from config)
         if load_pretrained:
-            self.backbone = backbone_cls.from_pretrained(model_name, **config_kwargs)
+            self.backbone = model_cls.from_pretrained(model_name, **config_kwargs)
         else:
             # Load config and create model without pretrained weights
-            config = backbone_cls.config_class.from_pretrained(model_name, **config_kwargs)
-            self.backbone = backbone_cls(config)
+            config = config_cls.from_pretrained(model_name, **config_kwargs)
+            self.backbone = model_cls.from_config(config)
         
         # Apply dropout if specified
         if backbone_dropout > 0.0:

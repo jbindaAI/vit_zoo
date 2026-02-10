@@ -32,7 +32,7 @@ For development: `pip install -e ".[dev]"`
 ```python
 from vit_zoo.factory import build_model
 
-model = build_model("dinov2_vit", head=10, freeze_backbone=True)
+model = build_model("facebook/dinov2-base", head=10, freeze_backbone=True)
 outputs = model(images)
 logits = outputs["predictions"]  # (batch_size, 10)
 ```
@@ -42,8 +42,8 @@ logits = outputs["predictions"]  # (batch_size, 10)
 ```python
 from vit_zoo.factory import build_model
 
-# Simple classification
-model = build_model("vanilla_vit", head=10, freeze_backbone=True)
+# Simple classification - pass any HuggingFace model ID
+model = build_model("google/vit-base-patch16-224", head=10, freeze_backbone=True)
 outputs = model(images)
 predictions = outputs["predictions"]  # Shape: (batch_size, 10)
 ```
@@ -62,13 +62,14 @@ mlp_head = MLPHead(
     activation="gelu"  # or 'relu', 'tanh', or nn.Module
 )
 
-model = build_model("dinov2_vit", head=mlp_head)
+model = build_model("facebook/dinov2-base", head=mlp_head)
 ```
 
 ### Embedding Extraction
 
 ```python
-model = build_model("clip_vit", head=None)
+from transformers import CLIPVisionModel
+model = build_model("openai/clip-vit-base-patch16", backbone_cls=CLIPVisionModel, head=None)
 outputs = model(images, output_embeddings=True)
 hidden_states = outputs["last_hidden_state"]  # (batch_size, seq_len, embedding_dim)
 cls_embedding = hidden_states[:, 0, :]  # (batch_size, embedding_dim)
@@ -79,7 +80,7 @@ predictions = outputs["predictions"]  # same as cls_embedding when head=None (Id
 
 ```python
 model = build_model(
-    "vanilla_vit",
+    "google/vit-base-patch16-224",
     head=10,
     config_kwargs={"attn_implementation": "eager"}
 )
@@ -107,20 +108,26 @@ class CustomHead(BaseHead):
         return self.fc(embeddings)
 
 head = CustomHead(input_dim=768, num_classes=10)
-model = build_model("vanilla_vit", head=head)
+model = build_model("google/vit-base-patch16-224", head=head)
 ```
 
-### Direct Usage (Any HuggingFace Model)
+### Multi-modal Models (CLIP)
+
+For CLIP and other multi-modal models, pass `backbone_cls` to load only the vision encoder (AutoModel would load the full model):
 
 ```python
-from vit_zoo.factory import build_model
-from transformers import ViTModel
+from transformers import CLIPVisionModel
+model = build_model("openai/clip-vit-base-patch16", backbone_cls=CLIPVisionModel, head=10)
+```
 
-model = build_model(
-    model_name="google/vit-large-patch16-224",
-    backbone_cls=ViTModel,
-    head=10
-)
+### Any HuggingFace Model
+
+`build_model` uses AutoModel to auto-detect the model type from the HuggingFace Hub. Any ViT-compatible model works:
+
+```python
+model = build_model("google/vit-large-patch16-224", head=10)
+model = build_model("facebook/deit-base-distilled-patch16-224", head=10)
+model = build_model("facebook/dinov2-with-registers-base", head=10)
 ```
 
 ## API Reference
@@ -129,10 +136,9 @@ model = build_model(
 
 ```python
 build_model(
-    model_type: Optional[str] = None,
-    model_name: Optional[str] = None,
-    backbone_cls: Optional[Type[ViTBackboneProtocol]] = None,
+    model_name: str,
     head: Optional[Union[int, BaseHead]] = None,
+    backbone_cls: Optional[Type] = None,
     freeze_backbone: bool = False,
     load_pretrained: bool = True,
     backbone_dropout: float = 0.0,
@@ -141,15 +147,15 @@ build_model(
 ```
 
 **Parameters:**
-- `model_type`: Registry key (`"vanilla_vit"`, `"deit_vit"`, `"dinov2_vit"`, etc.)
+- `model_name`: HuggingFace model identifier (e.g., `"google/vit-base-patch16-224"`, `"facebook/dinov2-base"`, `"openai/clip-vit-base-patch16"`). Uses AutoModel to auto-detect model type.
 - `head`: `int` (creates LinearHead), `BaseHead` instance, or `None` (embedding extraction)
+- `backbone_cls`: Optional HuggingFace model class (e.g., `CLIPVisionModel`). Use for multi-modal models where AutoModel loads the full model.
 - `freeze_backbone`: Freeze all backbone parameters
 - `config_kwargs`: Extra config options (e.g., `{"attn_implementation": "eager"}`)
 
 **Usage:**
-- Registry: `build_model("vanilla_vit", head=10)`
-- Override: `build_model("vanilla_vit", model_name="google/vit-large-patch16-224", head=10)`
-- Direct: `build_model(model_name="...", backbone_cls=ViTModel, head=10)`
+- `build_model("google/vit-base-patch16-224", head=10)`
+- `build_model("facebook/dinov2-base", head=None)` (embedding extraction)
 
 ### `ViTModel.forward()`
 
@@ -172,28 +178,24 @@ Always returns a dict. Keys:
 model.freeze_backbone(freeze: bool = True)  # Freeze/unfreeze backbone
 ```
 
-### `list_models()`
+## Supported Models
 
-```python
-from vit_zoo.factory import list_models
-available = list_models()  # Returns list of registered model types
-```
+Any ViT-compatible model on the HuggingFace Hub works. Examples:
 
-## Default Models
+- `google/vit-base-patch16-224`, `google/vit-large-patch16-224` (ViT)
+- `facebook/deit-base-distilled-patch16-224` (DeiT)
+- `facebook/dino-vitb16` (DINO)
+- `facebook/dinov2-base`, `facebook/dinov2-with-registers-base` (DINOv2)
+- `facebook/dinov3-vitb16-pretrain-lvd1689m` (DINOv3)
+- `openai/clip-vit-base-patch16` (CLIP Vision; pass `backbone_cls=CLIPVisionModel`)
 
-- `vanilla_vit`: Google ViT (`google/vit-base-patch16-224`)
-- `deit_vit`: Facebook DeiT (`facebook/deit-base-distilled-patch16-224`)
-- `dino_vit`: Facebook DINO (`facebook/dino-vitb16`)
-- `dinov2_vit`: Facebook DINOv2 (`facebook/dinov2-base`)
-- `dinov2_reg_vit`: DINOv2 with registers (`facebook/dinov2-with-registers-base`)
-- `dinov3_vit`: Facebook DINOv3 (`facebook/dinov3-vitb16-pretrain-lvd1689m`)
-- `clip_vit`: OpenAI CLIP Vision (`openai/clip-vit-base-patch16`)
+Browse the [HuggingFace Hub](https://huggingface.co/models?library=transformers&other=vision) for more models.
 
 ## Import Patterns
 
 ```python
 from vit_zoo import ViTModel
-from vit_zoo.factory import build_model, list_models
+from vit_zoo.factory import build_model
 from vit_zoo.components import ViTBackbone, BaseHead, LinearHead, MLPHead, IdentityHead
 ```
 

@@ -2,15 +2,16 @@
 
 import torch
 import pytest
+from transformers import CLIPVisionModel
+
 from vit_zoo import ViTModel
 from vit_zoo.factory import build_model
 from vit_zoo.components import LinearHead, MLPHead, IdentityHead
-from transformers import ViTModel as HFViTModel
 
 
 def test_build_model_simple():
     """Test building a simple model with linear head."""
-    model = build_model("vanilla_vit", head=2)
+    model = build_model("google/vit-base-patch16-224", head=2)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 2)
@@ -18,7 +19,7 @@ def test_build_model_simple():
 
 def test_build_model_no_head():
     """Test building a model without head (embedding extraction)."""
-    model = build_model("vanilla_vit", head=None)
+    model = build_model("google/vit-base-patch16-224", head=None)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     # Predictions are CLS embeddings (batch_size, embedding_dim)
@@ -39,7 +40,7 @@ def test_build_model_mlp_head():
         activation="gelu",
         dropout=0.1
     )
-    model = build_model("vanilla_vit", head=mlp_head)
+    model = build_model("google/vit-base-patch16-224", head=mlp_head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
@@ -51,14 +52,14 @@ def test_build_model_mlp_head():
         output_dim=10,
         activation=nn.SiLU()  # Custom activation module
     )
-    model2 = build_model("vanilla_vit", head=mlp_head_custom)
+    model2 = build_model("google/vit-base-patch16-224", head=mlp_head_custom)
     out2 = model2(dummy)
     assert out2["predictions"].shape == (1, 10)
 
 
 def test_build_model_attention_weights():
     """Test extracting attention weights."""
-    model = build_model("vanilla_vit", head=10, config_kwargs={"attn_implementation": "eager"})
+    model = build_model("google/vit-base-patch16-224", head=10, config_kwargs={"attn_implementation": "eager"})
     dummy = torch.rand(1, 3, 224, 224)
     outputs = model(dummy, output_attentions=True)
     
@@ -74,7 +75,7 @@ def test_build_model_attention_weights():
 
 def test_build_model_embeddings():
     """Test extracting embeddings."""
-    model = build_model("vanilla_vit", head=10)
+    model = build_model("google/vit-base-patch16-224", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     outputs = model(dummy, output_embeddings=True)
     
@@ -88,7 +89,7 @@ def test_build_model_embeddings():
 
 def test_build_model_freeze_backbone():
     """Test freezing backbone."""
-    model = build_model("vanilla_vit", head=10, freeze_backbone=True)
+    model = build_model("google/vit-base-patch16-224", head=10, freeze_backbone=True)
     
     # Check that backbone parameters are frozen
     for param in model.backbone.parameters():
@@ -102,30 +103,15 @@ def test_build_model_freeze_backbone():
 def test_build_model_custom_head():
     """Test building model with custom head instance."""
     head = LinearHead(input_dim=768, output_dim=5)
-    model = build_model("vanilla_vit", head=head)
+    model = build_model("google/vit-base-patch16-224", head=head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 5)
 
 
-def test_list_models():
-    """Test listing available models."""
-    from vit_zoo.factory import list_models
-    models = list_models()
-    assert isinstance(models, list)
-    assert len(models) > 0
-    assert "vanilla_vit" in models
-
-
-def test_invalid_model_type():
-    """Test error handling for invalid model type."""
-    with pytest.raises(ValueError, match="Unsupported model_type"):
-        build_model("invalid_model", head=10)
-
-
 def test_deit_model():
     """Test DeiT model creation."""
-    model = build_model("deit_vit", head=10)
+    model = build_model("facebook/deit-base-distilled-patch16-224", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
@@ -133,16 +119,15 @@ def test_deit_model():
 
 def test_dinov2_model():
     """Test DINOv2 model creation."""
-    model = build_model("dinov2_vit", head=10)
+    model = build_model("facebook/dinov2-base", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
 
 
-def test_build_model_override_model_name():
-    """Test overriding default model name from registry."""
-    # Use a different ViT variant
-    model = build_model("vanilla_vit", model_name="google/vit-large-patch16-224", head=10)
+def test_build_model_different_variant():
+    """Test using a different ViT variant (large instead of base)."""
+    model = build_model("google/vit-large-patch16-224", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
@@ -150,30 +135,17 @@ def test_build_model_override_model_name():
     assert model.embedding_dim == 1024
 
 
-def test_build_model_direct_usage():
-    """Test building model directly without registry."""
-    model = build_model(
-        model_name="google/vit-base-patch16-224",
-        backbone_cls=HFViTModel,
-        head=10
-    )
+def test_dinov2_reg_vit():
+    """Test DINOv2 with registers."""
+    model = build_model("facebook/dinov2-with-registers-base", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
 
 
-def test_build_model_direct_usage_missing_args():
-    """Test error when using direct usage without required args."""
-    with pytest.raises(ValueError, match="To use a non-default ViT backbone"):
-        build_model(model_name="google/vit-base-patch16-224", head=10)
-    
-    with pytest.raises(ValueError, match="To use a non-default ViT backbone"):
-        build_model(backbone_cls=HFViTModel, head=10)
-
-
-def test_dinov2_reg_vit():
-    """Test DINOv2 with registers."""
-    model = build_model("dinov2_reg_vit", head=10)
+def test_clip_vit():
+    """Test CLIP vision model."""
+    model = build_model("openai/clip-vit-base-patch16", backbone_cls=CLIPVisionModel, head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
@@ -198,7 +170,7 @@ def test_custom_head_subclass():
             return self.fc(embeddings)
     
     custom_head = SimpleCustomHead(input_dim=768, output_dim=5)
-    model = build_model("vanilla_vit", head=custom_head)
+    model = build_model("google/vit-base-patch16-224", head=custom_head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 5)
@@ -206,15 +178,15 @@ def test_custom_head_subclass():
 
 def test_head_input_dim_validation():
     """Test that head input dimension is validated."""
-    # Create head with wrong input dimension
-    wrong_head = LinearHead(input_dim=512, output_dim=10)  # vanilla_vit has 768
+    # Create head with wrong input dimension (vit-base has 768)
+    wrong_head = LinearHead(input_dim=512, output_dim=10)
     
     with pytest.raises(ValueError, match="Head input dimension.*does not match"):
-        build_model("vanilla_vit", head=wrong_head)
+        build_model("google/vit-base-patch16-224", head=wrong_head)
     
     # Create head with correct input dimension
     correct_head = LinearHead(input_dim=768, output_dim=10)
-    model = build_model("vanilla_vit", head=correct_head)
+    model = build_model("google/vit-base-patch16-224", head=correct_head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)

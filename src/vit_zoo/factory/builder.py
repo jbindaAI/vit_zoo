@@ -1,12 +1,10 @@
 """Factory functions for creating ViT models."""
 
-from typing import Optional, Union, Type, Dict, Any
+from typing import Optional, Union, Dict, Any, Type
 
-from .registry import MODEL_REGISTRY
 from ..components.backbone import ViTBackbone
 from ..model import ViTModel
 from ..components.heads import BaseHead, LinearHead
-from ..types.interfaces import ViTBackboneProtocol
 
 
 def _create_head_from_config(
@@ -42,21 +40,22 @@ def _create_head_from_config(
 
 
 def _create_vit_model(
-    backbone_cls: Type[ViTBackboneProtocol],
     model_name: str,
     head: Optional[Union[int, BaseHead]] = None,
+    backbone_cls: Optional[Type] = None,
     freeze_backbone: bool = False,
     load_pretrained: bool = True,
     backbone_dropout: float = 0.0,
     config_kwargs: Optional[Dict[str, Any]] = None,
-    ) -> ViTModel:
+) -> ViTModel:
     """Generic factory function to create ViT models.
     
     Args:
-        backbone_cls: HuggingFace model class (e.g., ViTModel, DeiTModel)
         model_name: HuggingFace model identifier or path
         head: Head configuration (int or BaseHead). If int, creates LinearHead.
               If BaseHead, validates that head.input_dim matches backbone embedding dimension.
+        backbone_cls: Optional HuggingFace model class (e.g., CLIPVisionModel).
+                     When provided, used instead of AutoModel. Use for multi-modal models like CLIP.
         freeze_backbone: Freeze all backbone parameters
         load_pretrained: Whether to load pretrained weights
         backbone_dropout: Dropout probability for backbone
@@ -68,8 +67,8 @@ def _create_vit_model(
         Configured ViTModel instance
     """
     backbone = ViTBackbone(
-        backbone_cls=backbone_cls,
         model_name=model_name,
+        backbone_cls=backbone_cls,
         load_pretrained=load_pretrained,
         config_kwargs=config_kwargs,
         backbone_dropout=backbone_dropout,
@@ -88,54 +87,32 @@ def _create_vit_model(
 
 
 def build_model(
-    model_type: Optional[str] = None,
-    model_name: Optional[str] = None,
-    backbone_cls: Optional[Type[ViTBackboneProtocol]] = None,
+    model_name: str,
     head: Optional[Union[int, BaseHead]] = None,
+    backbone_cls: Optional[Type] = None,
     freeze_backbone: bool = False,
     load_pretrained: bool = True,
     backbone_dropout: float = 0.0,
     config_kwargs: Optional[Dict[str, Any]] = None,
 ) -> ViTModel:
-    """Build a ViT model with flexible configuration.
+    """Build a ViT model from a HuggingFace model identifier.
     
-    Can be used in three ways:
-    
-    1. **Registry shortcut** (recommended for common models):
-       ```python
-       model = build_model("vanilla_vit", head=10)
-       ```
-    
-    2. **Override registry default** (use different variant):
-       ```python
-       model = build_model("vanilla_vit", model_name="google/vit-large-patch16-224", head=10)
-       ```
-    
-    3. **Direct usage** (for any HuggingFace model):
-       ```python
-       from transformers import ViTModel
-       model = build_model(
-           model_name="google/vit-base-patch16-224",
-           backbone_cls=ViTModel,
-           head=10
-       )
-       ```
+    Uses AutoModel to auto-detect the model type (ViT, DeiT, DINOv2, CLIP, etc.)
+    from the model's config on the HuggingFace Hub. Works with any ViT-compatible
+    model hosted on HuggingFace.
     
     Args:
-        model_type: Registered model type (e.g., 'vanilla_vit', 'deit_vit', 'dino_v2_vit').
-                   If provided, uses default backbone class and model name from registry.
-                   When model_type is provided, backbone_cls is ignored and cannot be overridden.
-        model_name: HuggingFace model identifier or path. If model_type is provided,
-                   this overrides the default model name from registry. If model_type is not
-                   provided, this is required along with backbone_cls.
-        backbone_cls: HuggingFace model class. Required if model_type is not provided.
-                     Ignored if model_type is provided (registry default is always used).
+        model_name: HuggingFace model identifier or path (e.g., 'google/vit-base-patch16-224',
+                   'facebook/dinov2-base', 'openai/clip-vit-base-patch16').
         head: 
             - int: Creates LinearHead with that output dimension
             - BaseHead: Uses provided head instance. Validates that head.input_dim matches
                        backbone embedding dimension. Users can subclass BaseHead to create
                        custom heads (e.g., MLP, UNET decoder, attention-based, etc.)
             - None: No head (embedding extraction mode)
+        backbone_cls: Optional HuggingFace model class (e.g., CLIPVisionModel).
+                     When provided, used instead of AutoModel. Required for multi-modal
+                     models like CLIP where AutoModel loads the full model.
         freeze_backbone: Freeze all backbone parameters
         load_pretrained: Whether to load pretrained weights
         backbone_dropout: Dropout probability for backbone
@@ -147,63 +124,30 @@ def build_model(
         Configured ViTModel instance
     
     Examples:
-        >>> # Simple classification with 10 classes using registry
-        >>> model = build_model("vanilla_vit", head=10, freeze_backbone=True)
+        >>> # Simple classification with 10 classes
+        >>> model = build_model("google/vit-base-patch16-224", head=10, freeze_backbone=True)
         
-        >>> # Use different model variant
-        >>> model = build_model("vanilla_vit", model_name="google/vit-large-patch16-224", head=10)
+        >>> # Use larger model variant
+        >>> model = build_model("google/vit-large-patch16-224", head=10)
         
         >>> # Custom MLP head (create it yourself)
         >>> from vit_zoo import MLPHead
         >>> mlp_head = MLPHead(input_dim=768, hidden_dims=[512, 256], output_dim=100)
-        >>> model = build_model("dino_v2_vit", head=mlp_head)
+        >>> model = build_model("facebook/dinov2-base", head=mlp_head)
         
-        >>> # Embedding extraction only
-        >>> model = build_model("clip_vit", head=None)
-        
-        >>> # Direct usage with any HuggingFace model
-        >>> from transformers import ViTModel
-        >>> model = build_model(
-        ...     model_name="google/vit-base-patch16-224",
-        ...     backbone_cls=ViTModel,
-        ...     head=10
-        ... )
+        >>> # Multi-modal models (CLIP) - pass backbone_cls for vision-only
+        >>> from transformers import CLIPVisionModel
+        >>> model = build_model("openai/clip-vit-base-patch16", backbone_cls=CLIPVisionModel, head=10)
         
         >>> # Custom head instance
         >>> from vit_zoo import LinearHead
         >>> head = LinearHead(input_dim=768, output_dim=10)
-        >>> model = build_model("vanilla_vit", head=head)
+        >>> model = build_model("google/vit-base-patch16-224", head=head)
     """
-    # (1) If model_type is provided, then user can only override model_name.
-    if model_type is not None:
-        if model_type not in MODEL_REGISTRY:
-            available = list(MODEL_REGISTRY.keys())
-            raise ValueError(
-                f"Unsupported model_type '{model_type}'. "
-                f"Available types: {available}"
-            )
-        
-        # Get default backbone_cls and model_name from the registry
-        default_backbone_cls, default_model_name = MODEL_REGISTRY[model_type]
-        
-        # Use defaults or overrides a model_name with provided.
-        final_backbone_cls = default_backbone_cls
-        final_model_name = model_name if model_name is not None else default_model_name
-    
-    # (2) If model_type is not provided, then both backbone_cls and model_name must be present.
-    else:
-        if backbone_cls is None or model_name is None:
-            raise ValueError(
-                "To use a non-default ViT backbone, you have to provide both `backbone_cls` and `model_name`."
-            )
-        final_backbone_cls = backbone_cls
-        final_model_name = model_name
-    
-    # (3) Create an instance of ViT Model
     return _create_vit_model(
-        backbone_cls=final_backbone_cls,
-        model_name=final_model_name,
+        model_name=model_name,
         head=head,
+        backbone_cls=backbone_cls,
         freeze_backbone=freeze_backbone,
         load_pretrained=load_pretrained,
         backbone_dropout=backbone_dropout,
