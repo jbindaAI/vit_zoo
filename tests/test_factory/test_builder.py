@@ -13,7 +13,7 @@ def test_build_model_simple():
     model = build_model("vanilla_vit", head=2)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 2)
+    assert out["predictions"].shape == (1, 2)
 
 
 def test_build_model_no_head():
@@ -21,9 +21,9 @@ def test_build_model_no_head():
     model = build_model("vanilla_vit", head=None)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    # Should return embeddings (batch_size, embedding_dim)
-    assert len(out.shape) == 2
-    assert out.shape[0] == 1
+    # Predictions are CLS embeddings (batch_size, embedding_dim)
+    assert len(out["predictions"].shape) == 2
+    assert out["predictions"].shape[0] == 1
 
 
 def test_build_model_mlp_head():
@@ -42,7 +42,7 @@ def test_build_model_mlp_head():
     model = build_model("vanilla_vit", head=mlp_head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 10)
+    assert out["predictions"].shape == (1, 10)
     
     # Test with custom nn.Module activation
     mlp_head_custom = MLPHead(
@@ -53,7 +53,7 @@ def test_build_model_mlp_head():
     )
     model2 = build_model("vanilla_vit", head=mlp_head_custom)
     out2 = model2(dummy)
-    assert out2.shape == (1, 10)
+    assert out2["predictions"].shape == (1, 10)
 
 
 def test_build_model_attention_weights():
@@ -80,10 +80,10 @@ def test_build_model_embeddings():
     
     assert isinstance(outputs, dict)
     assert "predictions" in outputs
-    assert "embeddings" in outputs
+    assert "last_hidden_state" in outputs
     assert outputs["predictions"].shape == (1, 10)
-    assert len(outputs["embeddings"].shape) == 3
-    assert outputs["embeddings"].shape[0] == 1
+    assert len(outputs["last_hidden_state"].shape) == 3
+    assert outputs["last_hidden_state"].shape[0] == 1
 
 
 def test_build_model_freeze_backbone():
@@ -105,7 +105,7 @@ def test_build_model_custom_head():
     model = build_model("vanilla_vit", head=head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 5)
+    assert out["predictions"].shape == (1, 5)
 
 
 def test_list_models():
@@ -128,7 +128,7 @@ def test_deit_model():
     model = build_model("deit_vit", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 10)
+    assert out["predictions"].shape == (1, 10)
 
 
 def test_dinov2_model():
@@ -136,7 +136,7 @@ def test_dinov2_model():
     model = build_model("dinov2_vit", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 10)
+    assert out["predictions"].shape == (1, 10)
 
 
 def test_build_model_override_model_name():
@@ -145,7 +145,7 @@ def test_build_model_override_model_name():
     model = build_model("vanilla_vit", model_name="google/vit-large-patch16-224", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 10)
+    assert out["predictions"].shape == (1, 10)
     # Large model has different embedding dim
     assert model.embedding_dim == 1024
 
@@ -159,7 +159,7 @@ def test_build_model_direct_usage():
     )
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 10)
+    assert out["predictions"].shape == (1, 10)
 
 
 def test_build_model_direct_usage_missing_args():
@@ -176,7 +176,7 @@ def test_dinov2_reg_vit():
     model = build_model("dinov2_reg_vit", head=10)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 10)
+    assert out["predictions"].shape == (1, 10)
 
 
 def test_custom_head_subclass():
@@ -201,7 +201,7 @@ def test_custom_head_subclass():
     model = build_model("vanilla_vit", head=custom_head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 5)
+    assert out["predictions"].shape == (1, 5)
 
 
 def test_head_input_dim_validation():
@@ -217,4 +217,4 @@ def test_head_input_dim_validation():
     model = build_model("vanilla_vit", head=correct_head)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    assert out.shape == (1, 10)
+    assert out["predictions"].shape == (1, 10)

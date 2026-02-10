@@ -33,7 +33,8 @@ For development: `pip install -e ".[dev]"`
 from vit_zoo.factory import build_model
 
 model = build_model("dinov2_vit", head=10, freeze_backbone=True)
-logits = model(images)  # (batch_size, 10)
+outputs = model(images)
+logits = outputs["predictions"]  # (batch_size, 10)
 ```
 
 ### Basic usage
@@ -43,7 +44,8 @@ from vit_zoo.factory import build_model
 
 # Simple classification
 model = build_model("vanilla_vit", head=10, freeze_backbone=True)
-predictions = model(images)  # Shape: (batch_size, 10)
+outputs = model(images)
+predictions = outputs["predictions"]  # Shape: (batch_size, 10)
 ```
 
 ### Custom MLP Head
@@ -68,8 +70,9 @@ model = build_model("dinov2_vit", head=mlp_head)
 ```python
 model = build_model("clip_vit", head=None)
 outputs = model(images, output_embeddings=True)
-embeddings = outputs["embeddings"]  # Shape: (batch_size, seq_len, embedding_dim)
-cls_embedding = embeddings[:, 0, :]  # Shape: (batch_size, embedding_dim)
+hidden_states = outputs["last_hidden_state"]  # (batch_size, seq_len, embedding_dim)
+cls_embedding = hidden_states[:, 0, :]  # (batch_size, embedding_dim)
+predictions = outputs["predictions"]  # same as cls_embedding when head=None (IdentityHead)
 ```
 
 ### Attention Weights
@@ -155,10 +158,13 @@ forward(
     pixel_values: torch.Tensor,
     output_attentions: bool = False,
     output_embeddings: bool = False,
-) -> Union[torch.Tensor, Dict[str, Any]]
+) -> Dict[str, Any]
 ```
 
-Returns predictions tensor, or dict with `"predictions"`, `"attentions"`, `"embeddings"` keys.
+Always returns a dict. Keys:
+- `"predictions"`: head output tensor (always present)
+- `"attentions"`: optional, when `output_attentions=True`
+- `"last_hidden_state"`: optional, when `output_embeddings=True`; shape `(batch_size, seq_len, embedding_dim)`
 
 ### `ViTModel.freeze_backbone()`
 

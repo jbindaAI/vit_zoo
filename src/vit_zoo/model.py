@@ -62,7 +62,7 @@ class ViTModel(nn.Module):
         pixel_values: torch.Tensor,
         output_attentions: bool = False,
         output_embeddings: bool = False,
-    ) -> Union[torch.Tensor, Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         """Forward pass through the model.
         
         Args:
@@ -71,11 +71,9 @@ class ViTModel(nn.Module):
             output_embeddings: Whether to return token embeddings for all output tokens
         
         Returns:
-            - If output_attentions=False and output_embeddings=False: predictions tensor
-            - If output_attentions=True or output_embeddings=True: dict with keys:
-              'predictions', 'attentions' (optional), 'embeddings' (optional)
-              
-              When output_embeddings=True, 'embeddings' is a tensor of shape
+            A dict with at least the key 'predictions' (head output tensor). Optional keys:
+            - 'attentions': when output_attentions=True; attention weights from the backbone
+            - 'last_hidden_state': when output_embeddings=True; tensor of shape
               (batch_size, seq_len, embedding_dim) containing embeddings for all output
               tokens (CLS + any special tokens like distillation/register tokens + patch tokens).
         """
@@ -92,26 +90,13 @@ class ViTModel(nn.Module):
         # Forward through head
         predictions = self.head(cls_embedding)
         
-        # Return format based on requested outputs
-        if output_attentions or output_embeddings:
-            result: Dict[str, Any] = {"predictions": predictions}
-            
-            if output_attentions:
-                # Check if attentions are available in backbone outputs
-                if "attentions" in backbone_outputs and backbone_outputs["attentions"] is not None:
-                    result["attentions"] = backbone_outputs["attentions"]
-                else:
-                    # If attentions were requested but not available, include None
-                    # This allows callers to know attentions were requested but unavailable
-                    result["attentions"] = None
-            
-            if output_embeddings:
-                if "last_hidden_state" not in backbone_outputs:
-                    raise ValueError(
-                        "Backbone output must contain 'last_hidden_state' to return token embeddings"
-                    )
-                result["embeddings"] = backbone_outputs["last_hidden_state"]
-            
-            return result
-        else:
-            return predictions
+        # Pack forward results and return
+        results = {"predictions": predictions}
+
+        if output_attentions:
+            results["attentions"] = backbone_outputs["attentions"]
+        
+        if output_embeddings:
+            results["last_hidden_state"] = backbone_outputs["last_hidden_state"]
+        
+        return results

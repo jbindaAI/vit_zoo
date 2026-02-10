@@ -80,11 +80,12 @@ class TestViTModel:
         pixel_values = torch.randn(2, 3, 224, 224)
         output = model(pixel_values)
         
-        assert output.shape == (2, 10)
-        assert isinstance(output, torch.Tensor)
+        assert isinstance(output, dict)
+        assert output["predictions"].shape == (2, 10)
     
     def test_vit_model_forward_with_embeddings(self):
         """Test ViTModel forward pass with embeddings output."""
+        # Model exposes token embeddings under 'last_hidden_state' for consistency with backbone.
         backbone = ViTBackbone(
             backbone_cls=HFViTModel,
             model_name="google/vit-base-patch16-224",
@@ -100,9 +101,9 @@ class TestViTModel:
         
         assert isinstance(outputs, dict)
         assert "predictions" in outputs
-        assert "embeddings" in outputs
+        assert "last_hidden_state" in outputs
         assert outputs["predictions"].shape == (3, 5)
-        assert outputs["embeddings"].shape == (3, 197, 768)
+        assert outputs["last_hidden_state"].shape == (3, 197, 768)
         
         # Predictions should be computed from the backbone's CLS embedding
         with torch.no_grad():
@@ -150,9 +151,9 @@ class TestViTModel:
         assert isinstance(outputs, dict)
         assert "predictions" in outputs
         assert "attentions" in outputs
-        assert "embeddings" in outputs
+        assert "last_hidden_state" in outputs
         assert outputs["predictions"].shape == (1, 10)
-        assert outputs["embeddings"].shape == (1, 197, 768)
+        assert outputs["last_hidden_state"].shape == (1, 197, 768)
         
         # Predictions should be computed from the backbone's CLS embedding
         with torch.no_grad():
@@ -173,7 +174,7 @@ class TestViTModel:
         for batch_size in [1, 2, 4, 8]:
             pixel_values = torch.randn(batch_size, 3, 224, 224)
             output = model(pixel_values)
-            assert output.shape == (batch_size, 5)
+            assert output["predictions"].shape == (batch_size, 5)
     
     def test_vit_model_freeze_backbone(self):
         """Test freeze_backbone method."""
@@ -227,7 +228,7 @@ class TestViTModel:
         pixel_values = torch.randn(2, 3, 224, 224)
         output = model(pixel_values)
         
-        assert output.shape == (2, 20)
+        assert output["predictions"].shape == (2, 20)
     
     def test_vit_model_with_identity_head(self):
         """Test ViTModel with IdentityHead (embedding extraction)."""
@@ -242,8 +243,8 @@ class TestViTModel:
         pixel_values = torch.randn(3, 3, 224, 224)
         output = model(pixel_values)
         
-        # Should return embeddings directly
-        assert output.shape == (3, 768)
+        # Predictions are CLS embeddings (IdentityHead passes through)
+        assert output["predictions"].shape == (3, 768)
     
     def test_vit_model_gradient_flow(self):
         """Test that gradients flow through ViTModel."""
@@ -257,7 +258,7 @@ class TestViTModel:
         
         pixel_values = torch.randn(2, 3, 224, 224, requires_grad=True)
         output = model(pixel_values)
-        loss = output.sum()
+        loss = output["predictions"].sum()
         loss.backward()
         
         assert pixel_values.grad is not None
@@ -279,7 +280,7 @@ class TestViTModel:
         pixel_values = torch.randn(2, 3, 224, 224)
         output = model(pixel_values)
         
-        assert output.shape == (2, 10)
+        assert output["predictions"].shape == (2, 10)
         assert not model.training
     
     def test_vit_model_train_mode(self):
@@ -296,5 +297,5 @@ class TestViTModel:
         pixel_values = torch.randn(2, 3, 224, 224)
         output = model(pixel_values)
         
-        assert output.shape == (2, 10)
+        assert output["predictions"].shape == (2, 10)
         assert model.training
