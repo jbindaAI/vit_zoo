@@ -39,53 +39,6 @@ def _create_head_from_config(
         return head_config
 
 
-def _create_vit_model(
-    model_name: str,
-    head: Optional[Union[int, BaseHead]] = None,
-    backbone_cls: Optional[Type] = None,
-    freeze_backbone: bool = False,
-    load_pretrained: bool = True,
-    backbone_dropout: float = 0.0,
-    config_kwargs: Optional[Dict[str, Any]] = None,
-) -> ViTModel:
-    """Generic factory function to create ViT models.
-    
-    Args:
-        model_name: HuggingFace model identifier or path
-        head: Head configuration (int or BaseHead). If int, creates LinearHead.
-              If BaseHead, validates that head.input_dim matches backbone embedding dimension.
-        backbone_cls: Optional HuggingFace model class (e.g., CLIPVisionModel).
-                     When provided, used instead of AutoModel. Use for multi-modal models like CLIP.
-        freeze_backbone: Freeze all backbone parameters
-        load_pretrained: Whether to load pretrained weights
-        backbone_dropout: Dropout probability for backbone
-        config_kwargs: Extra config options passed to model config or from_pretrained().
-                      Can include 'attn_implementation' to control attention mechanism
-                      (e.g., 'eager' for attention weights, 'flash_attention_2', 'sdpa').
-    
-    Returns:
-        Configured ViTModel instance
-    """
-    backbone = ViTBackbone(
-        model_name=model_name,
-        backbone_cls=backbone_cls,
-        load_pretrained=load_pretrained,
-        config_kwargs=config_kwargs,
-        backbone_dropout=backbone_dropout,
-    )
-    
-    # Handle head creation
-    head_instance = None
-    if head is not None:
-        head_instance = _create_head_from_config(head, backbone.get_embedding_dim())
-    
-    return ViTModel(
-        backbone=backbone,
-        head=head_instance,
-        freeze_backbone=freeze_backbone,
-    )
-
-
 def build_model(
     model_name: str,
     head: Optional[Union[int, BaseHead]] = None,
@@ -144,12 +97,18 @@ def build_model(
         >>> head = LinearHead(input_dim=768, output_dim=10)
         >>> model = build_model("google/vit-base-patch16-224", head=head)
     """
-    return _create_vit_model(
+    backbone = ViTBackbone(
         model_name=model_name,
-        head=head,
         backbone_cls=backbone_cls,
-        freeze_backbone=freeze_backbone,
         load_pretrained=load_pretrained,
-        backbone_dropout=backbone_dropout,
         config_kwargs=config_kwargs,
+        backbone_dropout=backbone_dropout,
+    )
+    head_instance = None
+    if head is not None:
+        head_instance = _create_head_from_config(head, backbone.get_embedding_dim())
+    return ViTModel(
+        backbone=backbone,
+        head=head_instance,
+        freeze_backbone=freeze_backbone,
     )
