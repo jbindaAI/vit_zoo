@@ -35,13 +35,14 @@ class TestViTModel:
         assert model.head.input_dim == 768
     
     def test_vit_model_initialization_with_freeze_backbone(self):
-        """Test ViTModel initialization with frozen backbone."""
+        """Test ViTModel with frozen backbone (via backbone.freeze_backbone)."""
         backbone = ViTBackbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
+        backbone.freeze_backbone(freeze=True)
         head = LinearHead(input_dim=768, output_dim=5)
-        model = ViTModel(backbone=backbone, head=head, freeze_backbone=True)
+        model = ViTModel(backbone=backbone, head=head)
         
         # Check that backbone parameters are frozen
         for param in model.backbone.parameters():
@@ -167,7 +168,7 @@ class TestViTModel:
             assert output["predictions"].shape == (batch_size, 5)
     
     def test_vit_model_freeze_backbone(self):
-        """Test freeze_backbone method."""
+        """Test backbone.freeze_backbone method."""
         backbone = ViTBackbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
@@ -180,17 +181,17 @@ class TestViTModel:
             assert param.requires_grad
         
         # Freeze backbone
-        model.freeze_backbone(freeze=True)
+        model.backbone.freeze_backbone(freeze=True)
         for param in model.backbone.parameters():
             assert not param.requires_grad
         
         # Unfreeze backbone
-        model.freeze_backbone(freeze=False)
+        model.backbone.freeze_backbone(freeze=False)
         for param in model.backbone.parameters():
             assert param.requires_grad
     
     def test_vit_model_freeze_backbone_default(self):
-        """Test freeze_backbone method with default parameter (freeze=True)."""
+        """Test backbone.freeze_backbone with default parameter (freeze=True)."""
         backbone = ViTBackbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
@@ -199,7 +200,7 @@ class TestViTModel:
         model = ViTModel(backbone=backbone, head=head)
         
         # Freeze with default
-        model.freeze_backbone()
+        model.backbone.freeze_backbone()
         for param in model.backbone.parameters():
             assert not param.requires_grad
     

@@ -104,11 +104,9 @@ def build_model(
         config_kwargs=config_kwargs,
         backbone_dropout=backbone_dropout,
     )
+    if freeze_backbone:
+        backbone.freeze_backbone(freeze=True)
     head_instance = None
     if head is not None:
         head_instance = _create_head_from_config(head, backbone.get_embedding_dim())
-    return ViTModel(
-        backbone=backbone,
-        head=head_instance,
-        freeze_backbone=freeze_backbone,
-    )
+    return ViTModel(backbone=backbone, head=head_instance)

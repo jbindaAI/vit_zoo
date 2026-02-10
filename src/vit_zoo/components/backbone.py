@@ -55,6 +55,15 @@ class ViTBackbone(nn.Module):
                     module.p = backbone_dropout
             self.backbone.apply(set_dropout)
     
+    def freeze_backbone(self, freeze: bool = True) -> None:
+        """Freeze or unfreeze all backbone parameters.
+
+        Args:
+            freeze: If True, freeze parameters; if False, unfreeze them
+        """
+        for param in self.backbone.parameters():
+            param.requires_grad = not freeze
+
     def get_embedding_dim(self) -> int:
         """Returns the embedding dimension of the backbone.
         

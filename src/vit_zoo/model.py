@@ -13,21 +13,18 @@ class ViTModel(nn.Module):
     
     This class provides a clean, extensible interface for ViT models with:
     - Custom heads (Linear, MLP, or custom implementations)
-    - Backbone freezing
     - Attention weight extraction
     - Embedding extraction
     
     Args:
         backbone: ViTBackbone instance
         head: Optional head module. If None, IdentityHead is used (embedding extraction mode)
-        freeze_backbone: If True, freeze all backbone parameters at initialization
     """
     
     def __init__(
         self,
         backbone: ViTBackbone,
         head: Optional[BaseHead] = None,
-        freeze_backbone: bool = False,
     ) -> None:
         super().__init__()
         
@@ -38,24 +35,11 @@ class ViTModel(nn.Module):
             self.head = IdentityHead(input_dim=self.backbone.get_embedding_dim())
         else:
             self.head = head
-        
-        # Apply freezing if requested
-        if freeze_backbone:
-            self.freeze_backbone(freeze=True)
     
     @property
     def embedding_dim(self) -> int:
         """Returns the embedding dimension of the backbone."""
         return self.backbone.get_embedding_dim()
-    
-    def freeze_backbone(self, freeze: bool = True) -> None:
-        """Freeze or unfreeze all backbone parameters.
-        
-        Args:
-            freeze: If True, freeze parameters; if False, unfreeze them
-        """
-        for param in self.backbone.parameters():
-            param.requires_grad = not freeze
     
     def forward(
         self,

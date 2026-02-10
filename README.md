@@ -172,10 +172,10 @@ Always returns a dict. Keys:
 - `"attentions"`: optional, when `output_attentions=True`
 - `"last_hidden_state"`: optional, when `output_embeddings=True`; shape `(batch_size, seq_len, embedding_dim)`
 
-### `ViTModel.freeze_backbone()`
+### Freezing the backbone
 
 ```python
-model.freeze_backbone(freeze: bool = True)  # Freeze/unfreeze backbone
+model.backbone.freeze_backbone(freeze: bool = True)  # Freeze/unfreeze backbone
 ```
 
 ## Supported Models
