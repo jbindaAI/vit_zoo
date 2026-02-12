@@ -2,6 +2,7 @@
 
 import torch
 import pytest
+from torch import nn
 from vit_zoo.utils import (
     _load_backbone,
     _get_embedding_dim,
@@ -170,6 +171,30 @@ class TestGetEmbeddingDim:
         )
         embedding_dim = _get_embedding_dim(backbone)
         assert embedding_dim == 1024
+
+    def test_get_embedding_dim_raises_when_no_config(self):
+        """Test _get_embedding_dim raises when backbone has no config."""
+        class NoConfigBackbone(nn.Module):
+            pass
+        backbone = NoConfigBackbone()
+        with pytest.raises(AttributeError, match="Backbone must have a 'config' attribute"):
+            _get_embedding_dim(backbone)
+
+    def test_get_embedding_dim_raises_when_config_none(self):
+        """Test _get_embedding_dim raises when backbone.config is None."""
+        class ConfigNoneBackbone(nn.Module):
+            config = None
+        with pytest.raises(AttributeError, match="Backbone must have a 'config' attribute"):
+            _get_embedding_dim(ConfigNoneBackbone())
+
+    def test_get_embedding_dim_raises_when_no_hidden_size(self):
+        """Test _get_embedding_dim raises when config has no hidden_size."""
+        class ConfigNoHiddenSize:
+            pass
+        class MockBackbone(nn.Module):
+            config = ConfigNoHiddenSize()
+        with pytest.raises(AttributeError, match="Backbone config must have 'hidden_size' attribute"):
+            _get_embedding_dim(MockBackbone())
 
 
 class TestGetClsTokenEmbedding:

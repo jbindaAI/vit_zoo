@@ -2,6 +2,7 @@
 
 import torch
 import pytest
+from torch import nn
 from vit_zoo import ViTModel
 from vit_zoo.utils import _get_cls_token_embedding, _get_embedding_dim
 from vit_zoo.utils import _load_backbone
@@ -302,3 +303,50 @@ class TestViTModel:
         
         assert output["predictions"].shape == (2, 10)
         assert model.training
+
+    def test_vit_model_forward_raises_when_attentions_requested_but_not_returned(self):
+        """Test ViTModel raises when output_attentions=True but backbone omits attentions."""
+        class MockConfig:
+            hidden_size = 768
+
+        class MockBackboneNoAttentions(nn.Module):
+            config = MockConfig()
+
+            def forward(self, pixel_values, output_attentions=False, output_hidden_states=False, **kwargs):
+                b = pixel_values.shape[0]
+                out = {"last_hidden_state": torch.randn(b, 197, 768)}
+                if output_attentions:
+                    pass  # intentionally do not add "attentions"
+                if output_hidden_states:
+                    out["last_hidden_state"] = out["last_hidden_state"]
+                return out
+
+        backbone = MockBackboneNoAttentions()
+        head = LinearHead(input_dim=768, output_dim=5)
+        model = ViTModel(backbone=backbone, head=head)
+        pixel_values = torch.randn(2, 3, 224, 224)
+        with pytest.raises(ValueError, match="Backbone did not return 'attentions'"):
+            model(pixel_values, output_attentions=True)
+
+    def test_vit_model_forward_raises_when_hidden_states_requested_but_not_returned(self):
+        """Test ViTModel raises when output_hidden_states=True but backbone omits last_hidden_state."""
+        class MockConfig:
+            hidden_size = 768
+
+        class MockBackboneNoHiddenStates(nn.Module):
+            config = MockConfig()
+
+            def forward(self, pixel_values, output_attentions=False, output_hidden_states=False, **kwargs):
+                b = pixel_values.shape[0]
+                # Provide pooler_output so CLS embedding works, but omit last_hidden_state when requested
+                out = {"pooler_output": torch.randn(b, 768)}
+                if output_hidden_states:
+                    pass  # intentionally do not add "last_hidden_state"
+                return out
+
+        backbone = MockBackboneNoHiddenStates()
+        head = LinearHead(input_dim=768, output_dim=5)
+        model = ViTModel(backbone=backbone, head=head)
+        pixel_values = torch.randn(2, 3, 224, 224)
+        with pytest.raises(ValueError, match="Backbone did not return 'last_hidden_state'"):
+            model(pixel_values, output_hidden_states=True)

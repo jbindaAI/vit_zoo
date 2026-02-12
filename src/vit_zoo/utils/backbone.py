@@ -38,7 +38,7 @@ def _load_backbone(
         backbone = model_cls.from_pretrained(model_name, **config_kwargs)
     else:
         config = config_cls.from_pretrained(model_name, **config_kwargs)
-        backbone = model_cls.from_config(config)
+        backbone = model_cls.from_config(config) if hasattr(model_cls, "from_config") else model_cls(config)
 
     if backbone_dropout > 0.0:
         def set_dropout(module):
