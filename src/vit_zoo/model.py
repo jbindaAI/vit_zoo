@@ -110,7 +110,15 @@ class ViTModel(nn.Module):
         predictions = self.head(cls_embedding)
         results: Dict[str, Any] = {"predictions": predictions}
         if output_attentions:
+            if "attentions" not in backbone_outputs:
+                raise ValueError(
+                    "Backbone did not return 'attentions' (output_attentions=True)."
+                )
             results["attentions"] = backbone_outputs["attentions"]
         if output_hidden_states:
+            if "last_hidden_state" not in backbone_outputs:
+                raise ValueError(
+                    "Backbone did not return 'last_hidden_state' (output_hidden_states=True)."
+                )
             results["last_hidden_state"] = backbone_outputs["last_hidden_state"]
         return results
