@@ -1,8 +1,8 @@
 """Main ViT model class with flexible head and backbone."""
 
 from typing import Optional, Union, Dict, Any, Type
-import torch
 from torch import nn
+import torch
 
 from vit_zoo.components.heads import BaseHead, IdentityHead
 from vit_zoo.utils import (

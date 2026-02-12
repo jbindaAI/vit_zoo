@@ -1,8 +1,8 @@
 """Helper functions for loading and using HuggingFace ViT backbones."""
 
 from typing import Dict, Any, Optional, Type
-import torch
 from torch import nn
+import torch
 
 from transformers import AutoModel, AutoConfig
 
@@ -57,7 +57,18 @@ def _get_embedding_dim(backbone: nn.Module) -> int:
 
     Returns:
         Hidden size / embedding dimension
+
+    Raises:
+        AttributeError: If backbone lacks config or config lacks hidden_size
     """
+    if not hasattr(backbone, "config") or backbone.config is None:
+        raise AttributeError(
+            "Backbone must have a 'config' attribute to get embedding dimension"
+        )
+    if not hasattr(backbone.config, "hidden_size"):
+        raise AttributeError(
+            "Backbone config must have 'hidden_size' attribute"
+        )
     return backbone.config.hidden_size
 
 
