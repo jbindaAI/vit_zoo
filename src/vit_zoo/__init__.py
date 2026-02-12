@@ -2,7 +2,7 @@
 
 from .model import ViTModel
 from .components import BaseHead, LinearHead, MLPHead, IdentityHead
-from .utils import get_embedding_dim, get_cls_token_embedding
+from .utils import get_embedding_dim
 
 __all__ = [
     "ViTModel",
@@ -11,5 +11,4 @@ __all__ = [
     "MLPHead",
     "IdentityHead",
     "get_embedding_dim",
-    "get_cls_token_embedding",
 ]

@@ -8,7 +8,7 @@ from .components.heads import BaseHead, IdentityHead
 from .utils import (
     _load_backbone,
     get_embedding_dim,
-    get_cls_token_embedding,
+    _get_cls_token_embedding,
     _validate_head_for_backbone,
     _create_linear_head,
 )
@@ -106,7 +106,7 @@ class ViTModel(nn.Module):
             output_hidden_states=output_hidden_states,
             **kwargs
         )
-        cls_embedding = get_cls_token_embedding(backbone_outputs)
+        cls_embedding = _get_cls_token_embedding(backbone_outputs)
         predictions = self.head(cls_embedding)
         results: Dict[str, Any] = {"predictions": predictions}
         if output_attentions:

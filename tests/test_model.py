@@ -2,7 +2,8 @@
 
 import torch
 import pytest
-from vit_zoo import ViTModel, get_embedding_dim, get_cls_token_embedding
+from vit_zoo import ViTModel, get_embedding_dim
+from vit_zoo.utils import _get_cls_token_embedding
 from vit_zoo.utils import _load_backbone
 from vit_zoo.components import LinearHead, MLPHead, IdentityHead
 
@@ -120,7 +121,7 @@ class TestViTModel:
         # Predictions should be computed from the backbone's CLS embedding
         with torch.no_grad():
             backbone_outputs = model.backbone(pixel_values, output_attentions=False, output_hidden_states=False)
-            cls_embedding = get_cls_token_embedding(backbone_outputs)
+            cls_embedding = _get_cls_token_embedding(backbone_outputs)
             torch.testing.assert_close(outputs["predictions"], model.head(cls_embedding))
     
     def test_vit_model_forward_with_attentions(self):
@@ -168,7 +169,7 @@ class TestViTModel:
         # Predictions should be computed from the backbone's CLS embedding
         with torch.no_grad():
             backbone_outputs = model.backbone(pixel_values, output_attentions=True, output_hidden_states=False)
-            cls_embedding = get_cls_token_embedding(backbone_outputs)
+            cls_embedding = _get_cls_token_embedding(backbone_outputs)
             torch.testing.assert_close(outputs["predictions"], model.head(cls_embedding))
     
     def test_vit_model_forward_different_batch_sizes(self):

@@ -61,8 +61,8 @@ def get_embedding_dim(backbone: nn.Module) -> int:
     return backbone.config.hidden_size
 
 
-def get_cls_token_embedding(outputs: Dict[str, Any]) -> torch.Tensor:
-    """Extracts CLS token embedding from backbone forward outputs.
+def _get_cls_token_embedding(outputs: Dict[str, Any]) -> torch.Tensor:
+    """Extracts CLS token embedding from backbone forward outputs. Private helper.
 
     Handles different output formats:
     - Models with 'pooler_output' (e.g., some CLIP models)

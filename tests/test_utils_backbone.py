@@ -5,7 +5,7 @@ import pytest
 from vit_zoo.utils import (
     _load_backbone,
     get_embedding_dim,
-    get_cls_token_embedding,
+    _get_cls_token_embedding,
 )
 
 
@@ -173,47 +173,47 @@ class TestGetEmbeddingDim:
 
 
 class TestGetClsTokenEmbedding:
-    """Tests for get_cls_token_embedding function."""
+    """Tests for _get_cls_token_embedding function."""
 
-    def test_get_cls_token_embedding_from_last_hidden_state(self):
-        """Test get_cls_token_embedding with last_hidden_state format."""
+    def test__get_cls_token_embedding_from_last_hidden_state(self):
+        """Test _get_cls_token_embedding with last_hidden_state format."""
         outputs = {
             "last_hidden_state": torch.randn(2, 197, 768)
         }
-        embeddings = get_cls_token_embedding(outputs)
+        embeddings = _get_cls_token_embedding(outputs)
         assert embeddings.shape == (2, 768)
         assert torch.equal(embeddings, outputs["last_hidden_state"][:, 0, :])
 
-    def test_get_cls_token_embedding_from_pooler_output(self):
-        """Test get_cls_token_embedding with pooler_output format."""
+    def test__get_cls_token_embedding_from_pooler_output(self):
+        """Test _get_cls_token_embedding with pooler_output format."""
         outputs = {
             "pooler_output": torch.randn(3, 768)
         }
-        embeddings = get_cls_token_embedding(outputs)
+        embeddings = _get_cls_token_embedding(outputs)
         assert embeddings.shape == (3, 768)
         assert torch.equal(embeddings, outputs["pooler_output"])
 
-    def test_get_cls_token_embedding_prefers_pooler_output(self):
+    def test__get_cls_token_embedding_prefers_pooler_output(self):
         """Test that pooler_output is preferred over last_hidden_state."""
         pooler = torch.randn(2, 768)
         outputs = {
             "pooler_output": pooler,
             "last_hidden_state": torch.randn(2, 197, 768)
         }
-        embeddings = get_cls_token_embedding(outputs)
+        embeddings = _get_cls_token_embedding(outputs)
         assert torch.equal(embeddings, pooler)
 
-    def test_get_cls_token_embedding_missing_outputs(self):
-        """Test get_cls_token_embedding raises error when outputs are missing."""
+    def test__get_cls_token_embedding_missing_outputs(self):
+        """Test _get_cls_token_embedding raises error when outputs are missing."""
         outputs = {}
         with pytest.raises(ValueError, match="Backbone output must contain"):
-            get_cls_token_embedding(outputs)
+            _get_cls_token_embedding(outputs)
 
-    def test_get_cls_token_embedding_none_pooler(self):
-        """Test get_cls_token_embedding handles None pooler_output."""
+    def test__get_cls_token_embedding_none_pooler(self):
+        """Test _get_cls_token_embedding handles None pooler_output."""
         outputs = {
             "pooler_output": None,
             "last_hidden_state": torch.randn(2, 197, 768)
         }
-        embeddings = get_cls_token_embedding(outputs)
+        embeddings = _get_cls_token_embedding(outputs)
         assert embeddings.shape == (2, 768)
