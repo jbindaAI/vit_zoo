@@ -2,47 +2,65 @@
 
 import torch
 import pytest
-from vit_zoo import ViTModel
-from vit_zoo.components import ViTBackbone, LinearHead, MLPHead, IdentityHead
+from vit_zoo import ViTModel, get_embedding_dim, get_cls_token_embedding
+from vit_zoo.utils import _load_backbone
+from vit_zoo.components import LinearHead, MLPHead, IdentityHead
 
 
 class TestViTModel:
     """Tests for the ViTModel class."""
+
+    def test_vit_model_init_from_model_name(self):
+        """Test ViTModel initialization from model_name (single entry point)."""
+        model = ViTModel(
+            model_name="google/vit-base-patch16-224",
+            head=10,
+            load_pretrained=False,
+        )
+        assert model.embedding_dim == 768
+        pixel_values = torch.randn(2, 3, 224, 224)
+        out = model(pixel_values)
+        assert out["predictions"].shape == (2, 10)
+
+    def test_vit_model_init_requires_model_name_or_backbone(self):
+        """Test ViTModel raises when neither model_name nor backbone provided."""
+        with pytest.raises(ValueError, match="Either model_name or backbone must be provided"):
+            ViTModel(head=10)
     
     def test_vit_model_initialization_with_head(self):
         """Test ViTModel initialization with a head."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
         head = LinearHead(input_dim=768, output_dim=10)
         model = ViTModel(backbone=backbone, head=head)
         
-        assert model.backbone == backbone
+        assert model.backbone is backbone
         assert model.head == head
         assert model.embedding_dim == 768
     
     def test_vit_model_initialization_without_head(self):
         """Test ViTModel initialization without head (uses IdentityHead)."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
         model = ViTModel(backbone=backbone, head=None)
         
-        assert model.backbone == backbone
+        assert model.backbone is backbone
         assert isinstance(model.head, IdentityHead)
         assert model.head.input_dim == 768
     
     def test_vit_model_initialization_with_freeze_backbone(self):
-        """Test ViTModel with frozen backbone (via backbone.freeze_backbone)."""
-        backbone = ViTBackbone(
+        """Test ViTModel with frozen backbone (via model.freeze_backbone)."""
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
-        backbone.freeze_backbone(freeze=True)
         head = LinearHead(input_dim=768, output_dim=5)
         model = ViTModel(backbone=backbone, head=head)
+        model.freeze_backbone(freeze=True)
         
         # Check that backbone parameters are frozen
         for param in model.backbone.parameters():
@@ -54,18 +72,18 @@ class TestViTModel:
     
     def test_vit_model_embedding_dim_property(self):
         """Test embedding_dim property."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
         model = ViTModel(backbone=backbone, head=None)
         
         assert model.embedding_dim == 768
-        assert model.embedding_dim == backbone.get_embedding_dim()
+        assert model.embedding_dim == get_embedding_dim(backbone)
     
     def test_vit_model_forward_simple(self):
         """Test ViTModel forward pass with simple output."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -81,7 +99,7 @@ class TestViTModel:
     def test_vit_model_forward_with_embeddings(self):
         """Test ViTModel forward pass with embeddings output."""
         # Model exposes token embeddings under 'last_hidden_state' for consistency with backbone.
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -91,7 +109,7 @@ class TestViTModel:
         model.eval()
         pixel_values = torch.randn(3, 3, 224, 224)
         with torch.no_grad():
-            outputs = model(pixel_values, output_embeddings=True)
+            outputs = model(pixel_values, output_hidden_states=True)
         
         assert isinstance(outputs, dict)
         assert "predictions" in outputs
@@ -102,12 +120,12 @@ class TestViTModel:
         # Predictions should be computed from the backbone's CLS embedding
         with torch.no_grad():
             backbone_outputs = model.backbone(pixel_values, output_attentions=False, output_hidden_states=False)
-            cls_embedding = model.backbone.get_cls_token_embedding(backbone_outputs)
+            cls_embedding = get_cls_token_embedding(backbone_outputs)
             torch.testing.assert_close(outputs["predictions"], model.head(cls_embedding))
     
     def test_vit_model_forward_with_attentions(self):
         """Test ViTModel forward pass with attention weights."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False,
             config_kwargs={"attn_implementation": "eager"}
@@ -127,7 +145,7 @@ class TestViTModel:
     
     def test_vit_model_forward_with_attentions_and_embeddings(self):
         """Test ViTModel forward pass with both attention weights and embeddings."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False,
             config_kwargs={"attn_implementation": "eager"}
@@ -138,7 +156,7 @@ class TestViTModel:
         model.eval()
         pixel_values = torch.randn(1, 3, 224, 224)
         with torch.no_grad():
-            outputs = model(pixel_values, output_attentions=True, output_embeddings=True)
+            outputs = model(pixel_values, output_attentions=True, output_hidden_states=True)
         
         assert isinstance(outputs, dict)
         assert "predictions" in outputs
@@ -150,12 +168,12 @@ class TestViTModel:
         # Predictions should be computed from the backbone's CLS embedding
         with torch.no_grad():
             backbone_outputs = model.backbone(pixel_values, output_attentions=True, output_hidden_states=False)
-            cls_embedding = model.backbone.get_cls_token_embedding(backbone_outputs)
+            cls_embedding = get_cls_token_embedding(backbone_outputs)
             torch.testing.assert_close(outputs["predictions"], model.head(cls_embedding))
     
     def test_vit_model_forward_different_batch_sizes(self):
         """Test ViTModel forward pass with different batch sizes."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -168,8 +186,8 @@ class TestViTModel:
             assert output["predictions"].shape == (batch_size, 5)
     
     def test_vit_model_freeze_backbone(self):
-        """Test backbone.freeze_backbone method."""
-        backbone = ViTBackbone(
+        """Test model.freeze_backbone method."""
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -181,18 +199,18 @@ class TestViTModel:
             assert param.requires_grad
         
         # Freeze backbone
-        model.backbone.freeze_backbone(freeze=True)
+        model.freeze_backbone(freeze=True)
         for param in model.backbone.parameters():
             assert not param.requires_grad
         
         # Unfreeze backbone
-        model.backbone.freeze_backbone(freeze=False)
+        model.freeze_backbone(freeze=False)
         for param in model.backbone.parameters():
             assert param.requires_grad
     
     def test_vit_model_freeze_backbone_default(self):
-        """Test backbone.freeze_backbone with default parameter (freeze=True)."""
-        backbone = ViTBackbone(
+        """Test model.freeze_backbone with default parameter (freeze=True)."""
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -200,13 +218,13 @@ class TestViTModel:
         model = ViTModel(backbone=backbone, head=head)
         
         # Freeze with default
-        model.backbone.freeze_backbone()
+        model.freeze_backbone()
         for param in model.backbone.parameters():
             assert not param.requires_grad
     
     def test_vit_model_with_mlp_head(self):
         """Test ViTModel with MLP head."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -220,7 +238,7 @@ class TestViTModel:
     
     def test_vit_model_with_identity_head(self):
         """Test ViTModel with IdentityHead (embedding extraction)."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -235,7 +253,7 @@ class TestViTModel:
     
     def test_vit_model_gradient_flow(self):
         """Test that gradients flow through ViTModel."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -254,7 +272,7 @@ class TestViTModel:
     
     def test_vit_model_eval_mode(self):
         """Test ViTModel in eval mode."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
@@ -270,7 +288,7 @@ class TestViTModel:
     
     def test_vit_model_train_mode(self):
         """Test ViTModel in train mode."""
-        backbone = ViTBackbone(
+        backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )

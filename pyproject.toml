@@ -7,8 +7,8 @@ name = "vit_zoo"
 version = "0.2.0"
 description = "Vision Transformers Zoo"
 keywords = [
-    "Vision Transformers"
-        ]
+    "Vision Transformers",
+]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.9"
 license = { text = "GPL-3.0" }
@@ -51,3 +51,6 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

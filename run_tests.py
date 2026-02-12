@@ -17,7 +17,6 @@ def main():
         "tests/",
         "-v",  # Verbose output
         "--tb=short",  # Short traceback format
-        "--strict-markers",  # Strict marker checking
         "--disable-warnings",  # Disable warnings to reduce noise in CI
     ]
     

@@ -1,84 +1,81 @@
-"""Tests for the factory module."""
+"""Tests for ViTModel initialization from model_name (replaces build_model tests)."""
 
 import torch
 import pytest
 from transformers import CLIPVisionModel
 
 from vit_zoo import ViTModel
-from vit_zoo.factory import build_model
-from vit_zoo.components import LinearHead, MLPHead, IdentityHead
+from vit_zoo.components import LinearHead, MLPHead, IdentityHead, BaseHead
 
 
-def test_build_model_simple():
-    """Test building a simple model with linear head."""
-    model = build_model("google/vit-base-patch16-224", head=2)
+def test_vit_model_simple():
+    """Test ViTModel with linear head from model_name."""
+    model = ViTModel("google/vit-base-patch16-224", head=2, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 2)
 
 
-def test_build_model_no_head():
-    """Test building a model without head (embedding extraction)."""
-    model = build_model("google/vit-base-patch16-224", head=None)
+def test_vit_model_no_head():
+    """Test ViTModel without head (embedding extraction)."""
+    model = ViTModel("google/vit-base-patch16-224", head=None, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
-    # Predictions are CLS embeddings (batch_size, embedding_dim)
     assert len(out["predictions"].shape) == 2
     assert out["predictions"].shape[0] == 1
 
 
-def test_build_model_mlp_head():
-    """Test building a model with MLP head."""
-    from vit_zoo.components import MLPHead
+def test_vit_model_mlp_head():
+    """Test ViTModel with MLP head."""
     import torch.nn as nn
-    
-    # Test with string activation
+
     mlp_head = MLPHead(
-        input_dim=768,  # vanilla_vit embedding dim
+        input_dim=768,
         hidden_dims=[512, 256],
         output_dim=10,
         activation="gelu",
-        dropout=0.1
+        dropout=0.1,
     )
-    model = build_model("google/vit-base-patch16-224", head=mlp_head)
+    model = ViTModel("google/vit-base-patch16-224", head=mlp_head, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
-    
-    # Test with custom nn.Module activation
+
     mlp_head_custom = MLPHead(
         input_dim=768,
         hidden_dims=[512],
         output_dim=10,
-        activation=nn.SiLU()  # Custom activation module
+        activation=nn.SiLU(),
     )
-    model2 = build_model("google/vit-base-patch16-224", head=mlp_head_custom)
+    model2 = ViTModel("google/vit-base-patch16-224", head=mlp_head_custom, load_pretrained=False)
     out2 = model2(dummy)
     assert out2["predictions"].shape == (1, 10)
 
 
-def test_build_model_attention_weights():
+def test_vit_model_attention_weights():
     """Test extracting attention weights."""
-    model = build_model("google/vit-base-patch16-224", head=10, config_kwargs={"attn_implementation": "eager"})
+    model = ViTModel(
+        "google/vit-base-patch16-224",
+        head=10,
+        load_pretrained=False,
+        config_kwargs={"attn_implementation": "eager"},
+    )
     dummy = torch.rand(1, 3, 224, 224)
     outputs = model(dummy, output_attentions=True)
-    
     assert isinstance(outputs, dict)
     assert "predictions" in outputs
     assert "attentions" in outputs
     assert outputs["predictions"].shape == (1, 10)
-    
     assert outputs["attentions"] is not None
     assert isinstance(outputs["attentions"], tuple)
     assert len(outputs["attentions"]) > 0
 
 
-def test_build_model_embeddings():
+def test_vit_model_embeddings():
     """Test extracting embeddings."""
-    model = build_model("google/vit-base-patch16-224", head=10)
+    model = ViTModel("google/vit-base-patch16-224", head=10, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
-    outputs = model(dummy, output_embeddings=True)
-    
+    outputs = model(dummy, output_hidden_states=True)
     assert isinstance(outputs, dict)
     assert "predictions" in outputs
     assert "last_hidden_state" in outputs
@@ -87,106 +84,107 @@ def test_build_model_embeddings():
     assert outputs["last_hidden_state"].shape[0] == 1
 
 
-def test_build_model_freeze_backbone():
-    """Test freezing backbone."""
-    model = build_model("google/vit-base-patch16-224", head=10, freeze_backbone=True)
-    
-    # Check that backbone parameters are frozen
+def test_vit_model_freeze_backbone():
+    """Test freezing backbone via init."""
+    model = ViTModel(
+        "google/vit-base-patch16-224",
+        head=10,
+        load_pretrained=False,
+        freeze_backbone=True,
+    )
     for param in model.backbone.parameters():
         assert not param.requires_grad
-    
-    # Check that head parameters are not frozen
     for param in model.head.parameters():
         assert param.requires_grad
 
 
-def test_build_model_custom_head():
-    """Test building model with custom head instance."""
+def test_vit_model_custom_head():
+    """Test ViTModel with custom head instance."""
     head = LinearHead(input_dim=768, output_dim=5)
-    model = build_model("google/vit-base-patch16-224", head=head)
+    model = ViTModel("google/vit-base-patch16-224", head=head, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 5)
 
 
-def test_deit_model():
-    """Test DeiT model creation."""
-    model = build_model("facebook/deit-base-distilled-patch16-224", head=10)
+def test_vit_model_deit():
+    """Test DeiT model."""
+    model = ViTModel("facebook/deit-base-distilled-patch16-224", head=10, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
 
 
-def test_dinov2_model():
-    """Test DINOv2 model creation."""
-    model = build_model("facebook/dinov2-base", head=10)
+def test_vit_model_dinov2():
+    """Test DINOv2 model."""
+    model = ViTModel("facebook/dinov2-base", head=10, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
 
 
-def test_build_model_different_variant():
-    """Test using a different ViT variant (large instead of base)."""
-    model = build_model("google/vit-large-patch16-224", head=10)
+def test_vit_model_large_variant():
+    """Test ViT large variant."""
+    model = ViTModel("google/vit-large-patch16-224", head=10, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
-    # Large model has different embedding dim
     assert model.embedding_dim == 1024
 
 
-def test_dinov2_reg_vit():
+def test_vit_model_dinov2_registers():
     """Test DINOv2 with registers."""
-    model = build_model("facebook/dinov2-with-registers-base", head=10)
+    model = ViTModel("facebook/dinov2-with-registers-base", head=10, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
 
 
-def test_clip_vit():
+def test_vit_model_clip():
     """Test CLIP vision model."""
-    model = build_model("openai/clip-vit-base-patch16", backbone_cls=CLIPVisionModel, head=10)
+    model = ViTModel(
+        "openai/clip-vit-base-patch16",
+        backbone_cls=CLIPVisionModel,
+        head=10,
+        load_pretrained=False,
+    )
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
 
 
-def test_custom_head_subclass():
-    """Test using a custom head subclass."""
-    from vit_zoo.components import BaseHead
+def test_vit_model_custom_head_subclass():
+    """Test custom head subclass."""
     import torch.nn as nn
-    
+
     class SimpleCustomHead(BaseHead):
         def __init__(self, input_dim: int, output_dim: int):
             super().__init__()
             self._input_dim = input_dim
             self.fc = nn.Linear(input_dim, output_dim)
-        
+
         @property
         def input_dim(self) -> int:
             return self._input_dim
-        
+
         def forward(self, embeddings):
             return self.fc(embeddings)
-    
+
     custom_head = SimpleCustomHead(input_dim=768, output_dim=5)
-    model = build_model("google/vit-base-patch16-224", head=custom_head)
+    model = ViTModel("google/vit-base-patch16-224", head=custom_head, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 5)
 
 
-def test_head_input_dim_validation():
+def test_vit_model_head_input_dim_validation():
     """Test that head input dimension is validated."""
-    # Create head with wrong input dimension (vit-base has 768)
     wrong_head = LinearHead(input_dim=512, output_dim=10)
-    
     with pytest.raises(ValueError, match="Head input dimension.*does not match"):
-        build_model("google/vit-base-patch16-224", head=wrong_head)
-    
-    # Create head with correct input dimension
+        ViTModel("google/vit-base-patch16-224", head=wrong_head, load_pretrained=False)
+
     correct_head = LinearHead(input_dim=768, output_dim=10)
-    model = build_model("google/vit-base-patch16-224", head=correct_head)
+    model = ViTModel("google/vit-base-patch16-224", head=correct_head, load_pretrained=False)
     dummy = torch.rand(1, 3, 224, 224)
     out = model(dummy)
     assert out["predictions"].shape == (1, 10)
