@@ -223,8 +223,8 @@ from vit_zoo.utils import _load_backbone  # for custom backbone path (private)
 
 ## Architecture
 
-- **Public API** (`vit_zoo.__all__`): `ViTModel`, `BaseHead`, `LinearHead`, `MLPHead`, `IdentityHead`, `get_embedding_dim`.
-- **Layout:** `vit_zoo/model.py` (ViT model), `vit_zoo/utils/backbone.py` (`_load_backbone`, get_embedding_dim, `_get_cls_token_embedding`), `vit_zoo/components/` (heads).
+- **Public API** (`vit_zoo.__all__`): `ViTModel`, `BaseHead`, `LinearHead`, `MLPHead`, `IdentityHead`.
+- **Layout:** `vit_zoo/model.py` (ViT model), `vit_zoo/utils/backbone.py` (`_load_backbone`, `_get_embedding_dim`, `_get_cls_token_embedding`), `vit_zoo/components/` (heads).
 - **Extending:** Add new heads in `components`; use `vit_zoo.utils._load_backbone` for custom backbones, then `ViTModel(backbone=..., head=...)`.
 
 ## Available Heads

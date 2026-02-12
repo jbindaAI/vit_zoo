@@ -7,7 +7,7 @@ from torch import nn
 from .components.heads import BaseHead, IdentityHead
 from .utils import (
     _load_backbone,
-    get_embedding_dim,
+    _get_embedding_dim,
     _get_cls_token_embedding,
     _validate_head_for_backbone,
     _create_linear_head,
@@ -69,7 +69,7 @@ class ViTModel(nn.Module):
     @property
     def embedding_dim(self) -> int:
         """Returns the embedding dimension of the backbone."""
-        return get_embedding_dim(self.backbone)
+        return _get_embedding_dim(self.backbone)
 
     def freeze_backbone(self, freeze: bool = True) -> None:
         """Freeze or unfreeze all backbone parameters.

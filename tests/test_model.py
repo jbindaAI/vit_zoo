@@ -2,8 +2,8 @@
 
 import torch
 import pytest
-from vit_zoo import ViTModel, get_embedding_dim
-from vit_zoo.utils import _get_cls_token_embedding
+from vit_zoo import ViTModel
+from vit_zoo.utils import _get_cls_token_embedding, _get_embedding_dim
 from vit_zoo.utils import _load_backbone
 from vit_zoo.components import LinearHead, MLPHead, IdentityHead
 
@@ -80,7 +80,7 @@ class TestViTModel:
         model = ViTModel(backbone=backbone, head=None)
         
         assert model.embedding_dim == 768
-        assert model.embedding_dim == get_embedding_dim(backbone)
+        assert model.embedding_dim == _get_embedding_dim(backbone)
     
     def test_vit_model_forward_simple(self):
         """Test ViTModel forward pass with simple output."""

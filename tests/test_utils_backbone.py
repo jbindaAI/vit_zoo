@@ -4,7 +4,7 @@ import torch
 import pytest
 from vit_zoo.utils import (
     _load_backbone,
-    get_embedding_dim,
+    _get_embedding_dim,
     _get_cls_token_embedding,
 )
 
@@ -150,25 +150,25 @@ class TestLoadBackbone:
 
 
 class TestGetEmbeddingDim:
-    """Tests for get_embedding_dim function."""
+    """Tests for _get_embedding_dim function."""
 
     def test_get_embedding_dim_vit_base(self):
-        """Test get_embedding_dim with ViT base."""
+        """Test _get_embedding_dim with ViT base."""
         backbone = _load_backbone(
             model_name="google/vit-base-patch16-224",
             load_pretrained=False
         )
-        embedding_dim = get_embedding_dim(backbone)
+        embedding_dim = _get_embedding_dim(backbone)
         assert embedding_dim == 768
         assert isinstance(embedding_dim, int)
 
     def test_get_embedding_dim_vit_large(self):
-        """Test get_embedding_dim with different model size."""
+        """Test _get_embedding_dim with different model size."""
         backbone = _load_backbone(
             model_name="google/vit-large-patch16-224",
             load_pretrained=False
         )
-        embedding_dim = get_embedding_dim(backbone)
+        embedding_dim = _get_embedding_dim(backbone)
         assert embedding_dim == 1024
 
 

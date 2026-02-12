@@ -49,8 +49,8 @@ def _load_backbone(
     return backbone
 
 
-def get_embedding_dim(backbone: nn.Module) -> int:
-    """Returns the embedding dimension of the backbone.
+def _get_embedding_dim(backbone: nn.Module) -> int:
+    """Returns the embedding dimension of the backbone. Private helper.
 
     Args:
         backbone: HuggingFace backbone with a .config.hidden_size attribute
