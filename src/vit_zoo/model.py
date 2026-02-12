@@ -4,38 +4,14 @@ from typing import Optional, Union, Dict, Any, Type
 import torch
 from torch import nn
 
-from .components.heads import BaseHead, IdentityHead, LinearHead
-from .utils import load_backbone, get_embedding_dim, get_cls_token_embedding
-
-
-def _create_head_from_config(
-    head_config: Union[int, BaseHead],
-    backbone_embedding_dim: int,
-) -> BaseHead:
-    """Create a head from simple input formats.
-
-    Args:
-        head_config:
-            - int: Creates LinearHead with that output dimension
-            - BaseHead: Validates that head's input_dim matches backbone embedding dimension
-        backbone_embedding_dim: Backbone embedding dimension
-
-    Returns:
-        BaseHead instance
-
-    Raises:
-        ValueError: If provided BaseHead's input_dim doesn't match backbone embedding dimension.
-    """
-    if isinstance(head_config, int):
-        return LinearHead(input_dim=backbone_embedding_dim, output_dim=head_config)
-    head_input_dim = head_config.input_dim
-    if head_input_dim != backbone_embedding_dim:
-        raise ValueError(
-            f"Head input dimension ({head_input_dim}) does not match "
-            f"backbone embedding dimension ({backbone_embedding_dim}). "
-            f"Please create a head with input_dim={backbone_embedding_dim}."
-        )
-    return head_config
+from .components.heads import BaseHead, IdentityHead
+from .utils import (
+    _load_backbone,
+    get_embedding_dim,
+    get_cls_token_embedding,
+    _validate_head_for_backbone,
+    _create_linear_head,
+)
 
 
 class ViTModel(nn.Module):
@@ -73,18 +49,20 @@ class ViTModel(nn.Module):
         else:
             if model_name is None:
                 raise ValueError("Either model_name or backbone must be provided.")
-            self.backbone = load_backbone(
+            self.backbone = _load_backbone(
                 model_name=model_name,
                 backbone_cls=backbone_cls,
                 load_pretrained=load_pretrained,
                 config_kwargs=config_kwargs or {},
                 backbone_dropout=backbone_dropout,
             )
-        dim = get_embedding_dim(self.backbone)
         if head is None:
-            self.head = IdentityHead(input_dim=dim)
+            self.head = IdentityHead(input_dim=self.embedding_dim)
+        elif isinstance(head, int):
+            self.head = _create_linear_head(head, self.embedding_dim)
         else:
-            self.head = _create_head_from_config(head, dim)
+            _validate_head_for_backbone(head, self.embedding_dim)
+            self.head = head
         if freeze_backbone:
             self.freeze_backbone(freeze=True)
 
