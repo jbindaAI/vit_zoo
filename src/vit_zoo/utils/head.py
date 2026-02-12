@@ -1,6 +1,6 @@
 """Helper functions for head validation and creation."""
 
-from ..components.heads import BaseHead, LinearHead
+from vit_zoo.components.heads import BaseHead, LinearHead
 
 
 def _validate_head_for_backbone(head: BaseHead, backbone_embedding_dim: int) -> None:

@@ -1,5 +1,5 @@
 """Model components: heads."""
 
-from .heads import BaseHead, LinearHead, MLPHead, IdentityHead
+from vit_zoo.components.heads import BaseHead, LinearHead, MLPHead, IdentityHead
 
 __all__ = ["BaseHead", "LinearHead", "MLPHead", "IdentityHead"]

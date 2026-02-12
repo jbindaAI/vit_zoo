@@ -4,8 +4,8 @@ from typing import Optional, Union, Dict, Any, Type
 import torch
 from torch import nn
 
-from .components.heads import BaseHead, IdentityHead
-from .utils import (
+from vit_zoo.components.heads import BaseHead, IdentityHead
+from vit_zoo.utils import (
     _load_backbone,
     _get_embedding_dim,
     _get_cls_token_embedding,
