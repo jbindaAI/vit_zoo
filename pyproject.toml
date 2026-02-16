@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vit_zoo"
+name = "vit-zoo"
 version = "0.2.1"
 description = "Vision Transformers Zoo"
 keywords = [
