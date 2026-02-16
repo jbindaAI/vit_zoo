@@ -14,7 +14,7 @@ A clean, extensible factory for creating HuggingFace-based Vision Transformer mo
 ## Installation
 
 ```bash
-pip install vit_zoo
+pip install vit-zoo
 ```
 
 From source:

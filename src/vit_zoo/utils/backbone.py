@@ -14,7 +14,7 @@ def _load_backbone(
     config_kwargs: Optional[Dict[str, Any]] = None,
     backbone_dropout: float = 0.0,
 ) -> nn.Module:
-    """Load a raw HuggingFace ViT backbone (no wrapper). Private helper.
+    """Load a raw HuggingFace ViT backbone. Private helper.
 
     Uses AutoModel to auto-detect model type from the HuggingFace model
     identifier, or a specific class when provided (e.g., CLIPVisionModel).
